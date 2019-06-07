@@ -13,7 +13,7 @@ base="/storage3/w/alexl/EukSpecies"
 species="Arabidopsis_thaliana"
 
 export PATH="$base/bin:$PATH"
-export base="$base\$species"
+export base="$base/$species"
 cd $base
 if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
 ```
