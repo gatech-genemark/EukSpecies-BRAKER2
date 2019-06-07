@@ -7,18 +7,20 @@ Project is set in bash shell.
 
 Environmental variables setup:  
 ```
-export base="/storage3/w/alexl/Arabidopsis_thaliana"
 umask 002
+
+base="/storage3/w/alexl/EukSpecies"
+species="Arabidopsis_thaliana"
+
+export PATH="$base/bin:$PATH"
+export base="$base\$species"
 cd $base
 if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
 ```
-Project installation  
+Create core folder structure
 ```
-cd /storage3/w/alexl/
-
-mkdir Arabidopsis_thaliana
+cd $base
+mkdir -p arx annot data
 ```
-
-
 
 
