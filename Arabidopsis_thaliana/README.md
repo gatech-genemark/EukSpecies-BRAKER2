@@ -58,8 +58,9 @@ cp ../../bin/run_RModeler.sh .
 # wait
 # check
 cd ../RMasker
-ln -s ../data/genome.fasta 
-run_RMasker.sh
+ln -s ../data/genome.fasta
+cp ../../bin/run_RMasker.sh .
+./run_RMasker.sh
 # wait
 # check
 scp zzz alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/Arabidopsis_thaliana/data
