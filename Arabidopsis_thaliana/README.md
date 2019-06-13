@@ -5,7 +5,7 @@ Georgia Institute of Technology
 ## Project setup
 Project is set in bash shell.  
 
-Environmental variables setup:  
+Environmental variables setup on GT cluster:  
 ```
 umask 002
 
@@ -45,13 +45,17 @@ Run this on AWS node configured for RM:
     ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 ```
 ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
+# set the environment
+umask 002
+species="Arabidopsis_thaliana"
+
 cd /data
-mkdir -p Arabidopsis_thaliana
-cd Arabidopsis_thaliana
+mkdir -p $species
+cd $species
 mkdir -p data RModeler RMasker
 cd data
-scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/Arabidopsis_thaliana/data/genome.fasta  .
-  ## passwd
+scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data/genome.fasta  .
+  ## password
 cd ../RModeler
 cp ../../bin/run_RModeler.sh .
 ./run_RModeler.sh
@@ -61,8 +65,8 @@ ln -s ../data/genome.fasta
 cp ../../bin/run_RMasker.sh .
 ./run_RMasker.sh
 # wait and check
-scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/Arabidopsis_thaliana/data
-  ## passwd
+scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
+  ## password
 ```
 
 
