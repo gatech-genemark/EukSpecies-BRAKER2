@@ -46,25 +46,23 @@ Run this on AWS node configured for RM:
 ```
 ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 cd /data
-mkdir Arabidopsis_thaliana
+mkdir -p Arabidopsis_thaliana
 cd Arabidopsis_thaliana
-mkdir data RModeler RMasker
+mkdir -p data RModeler RMasker
 cd data
-scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/Arabidopsis_thaliana/data/genome.fasta .
+scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/Arabidopsis_thaliana/data/genome.fasta  .
   ## passwd
 cd ../RModeler
 cp ../../bin/run_RModeler.sh .
 ./run_RModeler.sh
-# wait
-# check
+# wait and check
 cd ../RMasker
 ln -s ../data/genome.fasta
 cp ../../bin/run_RMasker.sh .
 ./run_RMasker.sh
-# wait
-# check
-scp zzz alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/Arabidopsis_thaliana/data
-  # passwd
+# wait and check
+scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/Arabidopsis_thaliana/data
+  ## passwd
 ```
 
 
