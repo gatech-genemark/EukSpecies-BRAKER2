@@ -26,7 +26,10 @@ Download genomic sequence and reformat it:
  * simplified FASTA defline with unique sequence ID as a first word in defline
  * select only nuclear DNA (exclude organelles)
  * all uppercase
+Keep fasta IDs in thefFile "list.tbl".  
+Match sequence ID's in FASTA file with sequence ID's in annotation file.  
 Use genomic sequence from NCBI, when possible.  
+Assembly discription is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001215.4  
 ```
 cd $base/arx
 wget  ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Drosophila_melanogaster/latest_assembly_versions/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.fna.gz
@@ -34,7 +37,7 @@ gunzip  GCF_000001215*.fna.gz
 
 grep '^>' GCF*.fna
 # adjust ID filtering
-grep '^>' GCF*.fna | grep -v NW_00  | grep -v NC_024511 |  sed 's/ .*//' | tr -d '>' > list.tbl
+grep '^>' GCF*.fna | grep -v NW_00  | grep -v NC_024511 | cut -f1,5 -d' ' | sed 's/^>//' > list.tbl
 get_fasta_with_tag.pl  --swap  --in GCF_000001215*.fna  --out genome.fasta  --list list.tbl  --v
 probuild --stat --details --seq genome.fasta
 probuild --reformat_fasta --in genome.fasta --out ../data/genome.fasta --uppercase 1 --letters_per_line 60 --original
@@ -70,4 +73,10 @@ cp ../../bin/run_RMasker.sh .
 scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
   ## password
 ```
-
+Download annotation from FlyBase.  
+NCBI annotation is transfered from FlyBase.  
+```
+cd $base/arx
+wget ftp://ftp.flybase.net/releases/FB2019_03/dmel_r6.28/gff/dmel-all-no-analysis-r6.28.gff.gz
+gunzip  dmel-all-no-analysis-r6.28.gff.gz
+```
