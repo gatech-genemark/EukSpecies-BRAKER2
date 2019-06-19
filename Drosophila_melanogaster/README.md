@@ -5,7 +5,7 @@ Georgia Institute of Technology
 ## Project setup
 Project is set in bash shell.  
 
-Environmental variables setup on GT cluster: 
+Environmental variables setup on GT cluster:  
 ```
 umask 002
 
@@ -34,7 +34,7 @@ Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001215.4
 Keep FASTA IDs in the file "list.tbl".  
 ```
 cd $base/arx
-wget  ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Drosophila_melanogaster/latest_assembly_versions/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.fna.gz
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.fna.gz
 gunzip  GCF_000001215*.fna.gz
 
 grep '^>' GCF*.fna
