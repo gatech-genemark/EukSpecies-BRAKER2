@@ -26,14 +26,19 @@ Download genomic sequence and reformat it:
  * simplified FASTA defline with unique sequence ID as a first word in defline
  * select only nuclear DNA (exclude organelles)
  * all uppercase
+ 
 Use genomic sequence from NCBI, when possible.  
+Match sequence ID's in FASTA file with sequence ID's in annotation file.  
+Use ID's sequence from annotation.  
+Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4
+Keep FASTA IDs in the file "list.tbl".  
 ```
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.4_TAIR10.1/GCF_000001735.4_TAIR10.1_genomic.fna.gz
 gunzip  GCF_000001735*.fna.gz
 
 grep '^>' GCF*.fna
-grep '^>' GCF*.fna | sed 's/ .*//' | tr -d '>' | grep -v NC_037304 | grep -v NC_000932  > list.tbl
+grep '^>' GCF*.fna  | grep -v NC_000932 | grep -v NC_037304 | cut -f1,5 -d' ' | sed 's/^>//'  | sed 's/ / Chr/' > list.tbl
 get_fasta_with_tag.pl --swap --in GCF_000001735.4_TAIR10.1_genomic.fna  --out genome.fasta  --list list.tbl --v
 probuild --stat --details --seq genome.fasta
 probuild --reformat_fasta --in genome.fasta --out ../data/genome.fasta --uppercase 1 --letters_per_line 60 --original
