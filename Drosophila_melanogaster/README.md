@@ -27,10 +27,11 @@ Download genomic sequence and reformat it:
  * select only nuclear DNA (exclude organelles)
  * all uppercase
 
-Keep FASTA IDs in the file "list.tbl".  
-Match sequence ID's in FASTA file with sequence ID's in annotation file.  
 Use genomic sequence from NCBI, when possible.  
+Match sequence ID's in FASTA file with sequence ID's in annotation file.  
+Use ID's sequence from annotation.  
 Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001215.4  
+Keep FASTA IDs in the file "list.tbl".  
 ```
 cd $base/arx
 wget  ftp://ftp.ncbi.nlm.nih.gov/genomes/refseq/invertebrate/Drosophila_melanogaster/latest_assembly_versions/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.fna.gz
@@ -45,6 +46,7 @@ probuild --reformat_fasta --in genome.fasta --out ../data/genome.fasta --upperca
 rm genome.fasta
 probuild --stat --details --seq ../data/genome.fasta
 
+gzip  GCF_000001215*.fna
 ```
 Run _de novo_ masking of genome using RepeatModeler.  
 Run this on AWS node configured for RM:  
@@ -76,8 +78,17 @@ scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$s
 ```
 Download annotation from FlyBase.  
 NCBI RefSeq is using annotation from FlyBase.  
+Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.
 ```
 cd $base/arx
 wget ftp://ftp.flybase.net/releases/FB2019_03/dmel_r6.28/gff/dmel-all-no-analysis-r6.28.gff.gz
 gunzip  dmel-all-no-analysis-r6.28.gff.gz
+
+gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out annot.gff3 --list list.tbl --col 2
+gff3_to_gtf.pl annot.gff3 annot.gtf
+compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+mv annot.gff3 ../annot/
+mv annot.gtf  ../annot/
+
+gzip dmel-all-no-analysis-*.gff
 ```
