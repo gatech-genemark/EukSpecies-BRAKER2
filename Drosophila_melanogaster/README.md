@@ -78,11 +78,11 @@ scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$s
 ```
 Download annotation from FlyBase.  
 NCBI RefSeq is using annotation from FlyBase.  
-Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.
+Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
 ```
 cd $base/arx
 wget ftp://ftp.flybase.net/releases/FB2019_03/dmel_r6.28/gff/dmel-all-no-analysis-r6.28.gff.gz
-gunzip  dmel-all-no-analysis-r6.28.gff.gz
+gunzip  dmel-all-no-analysis-*.gff.gz
 
 gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out annot.gff3 --list list.tbl --col 2
 gff3_to_gtf.pl annot.gff3 annot.gtf
