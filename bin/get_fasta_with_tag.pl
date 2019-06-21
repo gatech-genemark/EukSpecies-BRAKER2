@@ -188,7 +188,7 @@ sub LoadList
  
 			$ref->{$1} = $1;
 		}
-		elsif ( $line =~ /^\s*(\S+)\s+(\S+)\s*$/ )
+		elsif ( $line =~ /^\s*(\S+)\s+(\S+)\s*/ )
 		{
 			if ( exists $ref->{$1} )
 			{

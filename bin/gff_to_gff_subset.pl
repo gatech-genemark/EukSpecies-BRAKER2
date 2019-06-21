@@ -150,7 +150,7 @@ sub LoadList
 		next if ( $line =~ /^\s*$/ );
 		next if ( $line =~ /^#/ );
 		
-		if ( $line =~ /^\s*(\S+)\s+(\S+)\s*$/ )
+		if ( $line =~ /^\s*(\S+)\s+(\S+)\s*/ )
 		{
 			my $col_a = $1;
 			my $col_b = $2;
