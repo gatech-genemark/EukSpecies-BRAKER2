@@ -78,7 +78,7 @@ exit
 Download annotation from JGI.  
 JGI annotation is copy of Broad annotation.
 https://genome.jgi.doe.gov/portal/pages/dynamicOrganismDownload.jsf?organism=Neucr2  
-NCBI RefSeq may differ from Broad
+NCBI RefSeq may differ from Broad.  
 Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
 ```
 cd $base/arx
@@ -92,6 +92,4 @@ mv annot.gtf  ../annot/
 
 gzip Neucr2.filtered_proteins.BroadModels.gff3
 ```
-
-
 
