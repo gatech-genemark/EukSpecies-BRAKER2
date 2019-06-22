@@ -77,19 +77,28 @@ Select only protein coding genes from annotation and save it in GFF3 and GTF (st
 ```
 cd $base/arx
 wget ftp://ftp.wormbase.org/pub/wormbase/species/c_elegans/PRJNA13758/gff/c_elegans.PRJNA13758.WS271.annotations.gff3.gz
-gunzip  c_elegans.PRJNA13758.WS271.annotations.gff.gz
+gunzip  c_elegans.PRJNA13758.WS271.annotations.gff3.gz
 
 gff_to_gff_subset.pl  --in c_elegans.PRJNA13758.WS271.annotations.gff3  --out tmp.gff3 --list list.tbl --col 2
-cat tmp.gff3 | grep '^#' > annot.gff3
+grep '^#' tmp.gff3  | sort -k2,2 | uniq > annot.gff3
 cat tmp.gff3 | grep -P '\tWormBase\t' >> annot.gff3
 rm tmp.gff3
 gff3_to_gtf.pl annot.gff3 annot.gtf
 compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+
+# optional testing and reformating
+/home/tool/gt/bin/gt  gff3validator annot.gff3
+/home/tool/gt/bin/gt  gff3  -addintrons  -sort  -checkids  -o test.gff3  -retainids  -force  annot.gff3
+grep -v -P "\tintron\t7798302\t" test.gff3 > annot.gff3
+rm test.gff3
+/home/braker/src/eval-2.2.8/validate_gtf.pl -c -f annot.gtf
+mv annot.fixed.gtf annot.gtf
+compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+
 mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
 
 gzip c_elegans.PRJNA13758.WS271.annotations.gff3
 ```
-
 
 

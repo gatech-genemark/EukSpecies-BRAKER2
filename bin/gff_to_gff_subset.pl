@@ -59,16 +59,31 @@ my %allowed =
 #	"five_prime_UTR" => 1,
 #	"three_prime_UTR" => 1,
 	"intron" => 1,
-#	"transposable_element" => 1,
+	"transposable_element" => 1,
 
-#	"ncRNA" => 1,
-#	"snoRNA" => 1,
-#	"pseudogene" => 1,
-#	"snRNA" => 1,
-#	"tRNA" => 1,
-#	"rRNA" => 1,
-#	"pre_miRNA" => 1,
-#	"miRNA" => 1,
+	"pseudogenic_transcript" => 1,
+	"piRNA" => 1,
+	"lincRNA" => 1,
+	"miRNA_primary_transcript" => 1,
+	"nc_primary_transcript" => 1,
+	"pseudogenic_rRNA" => 1,
+	"pseudogenic_tRNA" => 1,
+	"scRNA" => 1,
+
+	"lnc_RNA" => 1,
+	"antisense_lncRNA" => 1,
+	"transcript_region" => 1,
+	"antisense_RNA" => 1,
+	"transposable_element_gene" => 1,
+
+	"ncRNA" => 1,
+	"snoRNA" => 1,
+	"pseudogene" => 1,
+	"snRNA" => 1,
+	"tRNA" => 1,
+	"rRNA" => 1,
+	"pre_miRNA" => 1,
+	"miRNA" => 1,
 );
 
 my %found;
@@ -82,7 +97,7 @@ while ( my $record = <$IN> )
 
 	++$count_in;
 
-	if ( $record =~ /^##gff-version 3/ )
+	if ( $record =~ /^##gff-version\s+3/ )
 	{
 		print OUT $record;
 		next;

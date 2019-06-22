@@ -47,6 +47,7 @@ while(<$IN>)
 
 			my $line = $_;
 			$line =~ s/\tParent=.*$/\t/;
+			$line =~ s/\tID=.*$/\t/;
 
 			print $OUT $line;
 
