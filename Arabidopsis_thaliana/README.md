@@ -84,20 +84,20 @@ wget https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/A
 gunzip  Araport11_GFF3_genes_transposons.201606.gff.gz
 
 gff_to_gff_subset.pl  --in Araport11_GFF3_genes_transposons.201606.gff  --out annot.gff3 --list list.tbl --col 2
-echo "##gff-version 3" > tmp_header.gff3
-probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep Chr | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_header.gff3
-cat annot.gff3 | grep -v gff-version  >> tmp_header.gff3
-mv tmp_header.gff3  annot.gff3
+echo "##gff-version 3" > tmp.gff3
+probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep Chr | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp.gff3
+cat annot.gff3 | grep -v gff-version  >> tmp.gff3
+mv  tmp.gff3  annot.gff3
+#check
+/home/tool/gt/bin/gt  gff3validator annot.gff3
+# reformat
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp.gff3  annot.gff3
+rm  tmp.gff3
+
 gff3_to_gtf.pl annot.gff3 annot.gtf
 compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
-
-# optional testing and reformating
-/home/tool/gt/bin/gt  gff3validator annot.gff3
-/home/tool/gt/bin/gt  gff3  -addintrons  -sort  -checkids  -o test.gff3  -retainids  -force  annot.gff3
-mv test.gff3 annot.gff3
-/home/braker/src/eval-2.2.8/validate_gtf.pl -c -f annot.gtf
-mv annot.fixed.gtf annot.gtf
-compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+# check
+/home/braker/src/eval-2.2.8/validate_gtf.pl -c annot.gtf
 
 mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/

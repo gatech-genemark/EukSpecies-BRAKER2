@@ -84,17 +84,19 @@ cd $base/arx
 wget ftp://ftp.flybase.net/releases/FB2019_03/dmel_r6.28/gff/dmel-all-no-analysis-r6.28.gff.gz
 gunzip  dmel-all-no-analysis-*.gff.gz
 
-gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out annot.gff3 --list list.tbl --col 2
-gff3_to_gtf.pl annot.gff3 annot.gtf
-compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out tmp.gff3  --list list.tbl  --col 2
+#check
+/home/tool/gt/bin/gt  gff3validator  tmp.gff3
+# some CDS lines with multiple parents require different phases : this creates a new CDS line with corrected phase
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o annot.gff3  tmp.gff3
+compare_intervals_exact.pl  --f1 annot.gff3  --f2 tmp.gff3
+rm  tmp.gff3
 
-# optional testing and reformating
-#/home/tool/gt/bin/gt  gff3validator annot.gff3
-#/home/tool/gt/bin/gt  gff3  -addintrons  -sort  -checkids  -o test.gff3  -retainids  -force  annot.gff3
-# mv test.gff3 annot.gff3
-#/home/braker/src/eval-2.2.8/validate_gtf.pl -c -f annot.gtf
-#mv annot.fixed.gtf annot.gtf
-#compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+gff3_to_gtf.pl  annot.gff3  annot.gtf
+# eval validate is not handling correctly transspliced genes on different strands
+# do not use "-f" fixed by eval version
+/home/braker/src/eval-2.2.8/validate_gtf.pl -c annot.gtf
+compare_intervals_exact.pl  --f1 annot.gff3  --f2 annot.gtf
 
 mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/

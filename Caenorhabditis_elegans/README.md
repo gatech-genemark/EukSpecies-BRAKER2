@@ -83,17 +83,16 @@ gff_to_gff_subset.pl  --in c_elegans.PRJNA13758.WS271.annotations.gff3  --out tm
 grep '^#' tmp.gff3  | sort -k2,2 | uniq > annot.gff3
 cat tmp.gff3 | grep -P '\tWormBase\t' >> annot.gff3
 rm tmp.gff3
+#check
+/home/tool/gt/bin/gt  gff3validator annot.gff3
+#reformat
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp.gff3  annot.gff3
+mv tmp.gff3  annot.gff3
+
 gff3_to_gtf.pl annot.gff3 annot.gtf
 compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
-
-# optional testing and reformating
-/home/tool/gt/bin/gt  gff3validator annot.gff3
-/home/tool/gt/bin/gt  gff3  -addintrons  -sort  -checkids  -o test.gff3  -retainids  -force  annot.gff3
-grep -v -P "\tintron\t7798302\t" test.gff3 > annot.gff3
-rm test.gff3
-/home/braker/src/eval-2.2.8/validate_gtf.pl -c -f annot.gtf
-mv annot.fixed.gtf annot.gtf
-compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+#check
+/home/braker/src/eval-2.2.8/validate_gtf.pl -c annot.gtf
 
 mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
