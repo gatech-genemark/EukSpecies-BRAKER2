@@ -5,7 +5,7 @@ Georgia Institute of Technology
 ## Project setup
 Project is set in bash shell.  
 
-Environmental variables setup on GT cluster:  
+Setup environment on GT cluster as:  
 ```
 umask 002
 
@@ -17,21 +17,22 @@ export base="$base/$species"
 cd $base
 if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
 ```
-Create core folder structure
+Create core folders  
 ```
 cd $base
-mkdir -p arx annot data
+mkdir -p arx annot data mask
 ```
 Download genomic sequence and reformat it:  
- * simplified FASTA defline with unique sequence ID as a first word in defline
+ * simplified FASTA defline with a first word in defline as a unique sequence ID
  * select only nuclear DNA (exclude organelles)
- * all uppercase
+ * set sequence in all uppercase
+When possible use genomic sequence from NCBI.  
+Match sequence ID in FASTA file with sequence ID in annotation file.  
+Use ID from annotation.  
+Keep IDs in the file "list.tbl".  
+First column in the table is sequence ID and second column is annotation ID.  
 
-Use genomic sequence from NCBI, when possible.  
-Match sequence ID's in FASTA file with sequence ID's in annotation file.  
-Use ID's sequence from annotation.  
-Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4
-Keep FASTA IDs in the file "list.tbl".  
+Description of assembly is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4  
 ```
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.4_TAIR10.1/GCF_000001735.4_TAIR10.1_genomic.fna.gz
@@ -63,17 +64,14 @@ mkdir -p data RModeler RMasker
 cd data
 scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data/genome.fasta  .
   ## password
-cd ../RModeler
-cp ../../bin/run_RModeler.sh .
-./run_RModeler.sh
+cd ..
+cp ../bin/run_masking.sh .
+nohup ./run_masking.sh >&  loginfo &
 # wait and check
-cd ../RMasker
-ln -s ../data/genome.fasta
-cp ../../bin/run_RMasker.sh .
-./run_RMasker.sh
-# wait and check
+cd RMasker
 scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
   ## password
+exit
 ```
 Download annotation from Tair.  
 NCBI RefSeq is using annotation from Tair.  
@@ -83,16 +81,16 @@ cd $base/arx
 wget https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_GFF3_genes_transposons.201606.gff.gz
 gunzip  Araport11_GFF3_genes_transposons.201606.gff.gz
 
-gff_to_gff_subset.pl  --in Araport11_GFF3_genes_transposons.201606.gff  --out annot.gff3 --list list.tbl --col 2
-echo "##gff-version 3" > tmp.gff3
-probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep Chr | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp.gff3
-cat annot.gff3 | grep -v gff-version  >> tmp.gff3
-mv  tmp.gff3  annot.gff3
+gff_to_gff_subset.pl  --in Araport11_GFF3_genes_transposons.201606.gff  --out tmp_annot.gff3 --list list.tbl --col 2
+echo "##gff-version 3" > annot.gff3
+probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep Chr | awk '{print "##sequence-region  " $1 "  1 " $2}' >> annot.gff3
+cat tmp_annot.gff3 | grep -v gff-version  >> annot.gff3
+rm  tmp_annot.gff3
 #check
 /home/tool/gt/bin/gt  gff3validator annot.gff3
 # reformat
-/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp.gff3  annot.gff3
-rm  tmp.gff3
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
+mv tmp_annot.gff3  annot.gff3
 
 gff3_to_gtf.pl annot.gff3 annot.gtf
 compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
