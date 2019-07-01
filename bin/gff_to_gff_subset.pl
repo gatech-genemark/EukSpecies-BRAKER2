@@ -103,14 +103,12 @@ while ( my $record = <$IN> )
 		next;
 	}
 
-	if (( $record =~/^##sequence-region\s+(\S+)\s*/ ) or ( $record =~/^(\S+)\t(\S+)\t(\S+)\t/ ))
+	if ( $record =~/^(\S+)\t\S+\t(\S+)\t/ )
 	{
 		my $id = $1;
+		my $type = $2;
 
-		if ( defined $2 and defined $3 and $2 )
-		{
-			next if ( ! exists $allowed{$3} );
-		}
+		next if ( ! exists $allowed{$type} );
 
 		if ( exists( $h{$id} ) )
 		{
@@ -120,6 +118,14 @@ while ( my $record = <$IN> )
 			++$count_out;
 			$found{$id} +=1 ;
 		}
+		else
+		{
+#			print "$id $type\n";
+		}
+	}
+	else
+	{
+#		print $record;
 	}
 }
 
@@ -223,7 +229,7 @@ sub PrintUsage
 
   List file may have two columns
   --list <file name> : name_1 name_2
-  This scpecifies which column to use as
+  This specifies which column to use as
   --col  <column>    :   1  or  2
   --swap             : swap one name to another
 ";
