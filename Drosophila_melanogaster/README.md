@@ -1,11 +1,11 @@
-# Species: _Drosophila_melanogaster_
+# Species: _Drosophila_melanogaster_  
 Alex Lomsadze  
 Georgia Institute of Technology  
 2019  
-## Project setup
+## Project setup  
 Project is set in bash shell.  
 
-Environmental variables setup on GT cluster:  
+Setup environment on GT cluster as:  
 ```
 umask 002
 
@@ -17,21 +17,23 @@ export base="$base/$species"
 cd $base
 if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
 ```
-Create core folder structure
+Create core folders  
 ```
 cd $base
-mkdir -p arx annot data
+mkdir -p arx annot data mask
 ```
 Download genomic sequence and reformat it:  
- * simplified FASTA defline with unique sequence ID as a first word in defline
+ * simplified FASTA defline with a first word in defline as a unique sequence ID
  * select only nuclear DNA (exclude organelles)
- * all uppercase
+ * set sequence in all uppercase
 
-Use genomic sequence from NCBI, when possible.  
-Match sequence ID's in FASTA file with sequence ID's in annotation file.  
-Use ID's sequence from annotation.  
-Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001215.4  
-Keep FASTA IDs in the file "list.tbl".  
+When possible use genomic sequence from NCBI.  
+Match sequence ID in FASTA file with sequence ID in annotation file.  
+Use ID from annotation.  
+Keep IDs in the file "list.tbl". 
+First column in the table is sequence ID and second column is annotation ID.  
+
+Description of assembly is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001215.4  
 ```
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.fna.gz
@@ -40,10 +42,10 @@ gunzip  GCF_000001215*.fna.gz
 grep '^>' GCF*.fna
 # adjust ID filtering
 grep '^>' GCF*.fna | grep -v NW_00  | grep -v NC_024511 | cut -f1,5 -d' ' | sed 's/^>//' > list.tbl
-get_fasta_with_tag.pl  --swap  --in GCF_000001215*.fna  --out genome.fasta  --list list.tbl  --v
-probuild --stat --details --seq genome.fasta
-probuild --reformat_fasta --in genome.fasta --out ../data/genome.fasta --uppercase 1 --letters_per_line 60 --original
-rm genome.fasta
+get_fasta_with_tag.pl  --swap  --in GCF_000001215*.fna  --out tmp_genome.fasta  --list list.tbl  --v
+probuild --stat --details --seq tmp_genome.fasta
+probuild --reformat_fasta --in tmp_genome.fasta --out ../data/genome.fasta --uppercase 1 --letters_per_line 60 --original
+rm tmp_genome.fasta
 probuild --stat --details --seq ../data/genome.fasta
 
 gzip  GCF_000001215*.fna
