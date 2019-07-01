@@ -30,7 +30,7 @@ Download genomic sequence and reformat it:
 When possible use genomic sequence from NCBI.  
 Match sequence ID in FASTA file with sequence ID in annotation file.  
 Use ID from annotation.  
-Keep IDs in the file "list.tbl". 
+Keep IDs in the file "list.tbl".  
 First column in the table is sequence ID and second column is annotation ID.  
 
 Description of assembly is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001215.4  
@@ -40,7 +40,6 @@ wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Rele
 gunzip  GCF_000001215*.fna.gz
 
 grep '^>' GCF*.fna
-# adjust ID filtering
 grep '^>' GCF*.fna | grep -v NW_00  | grep -v NC_024511 | cut -f1,5 -d' ' | sed 's/^>//' > list.tbl
 get_fasta_with_tag.pl  --swap  --in GCF_000001215*.fna  --out tmp_genome.fasta  --list list.tbl  --v
 probuild --stat --details --seq tmp_genome.fasta
@@ -66,21 +65,18 @@ mkdir -p data RModeler RMasker
 cd data
 scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data/genome.fasta  .
   ## password
-cd ../RModeler
-cp ../../bin/run_RModeler.sh .
-./run_RModeler.sh
+cd ..
+cp ../bin/run_masking.sh .
+nohup ./run_masking.sh >&  loginfo &
 # wait and check
-cd ../RMasker
-ln -s ../data/genome.fasta
-cp ../../bin/run_RMasker.sh .
-./run_RMasker.sh
-# wait and check
+cd RMasker
 scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
   ## password
+exit
 ```
 Download annotation from FlyBase.  
 NCBI RefSeq is using annotation from FlyBase.  
-Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
+Select protein coding genes from annotation and save them in GFF3 and GTF (stop codon included) formats.  
 ```
 cd $base/arx
 wget ftp://ftp.flybase.net/releases/FB2019_03/dmel_r6.28/gff/dmel-all-no-analysis-r6.28.gff.gz
