@@ -5,7 +5,7 @@ Georgia Institute of Technology
 ## Project setup
 Project is set in bash shell.  
 
-Environmental variables setup on GT cluster:  
+Setup environment on GT cluster as:  
 ```
 umask 002
 
@@ -20,18 +20,19 @@ if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
 Create core folder structure
 ```
 cd $base
-mkdir -p arx annot data
+mkdir -p arx annot data mask
 ```
 Download genomic sequence and reformat it:  
- * simplified FASTA defline with unique sequence ID as a first word in defline
+ * simplified FASTA defline with a first word in defline as a unique sequence ID
  * select only nuclear DNA (exclude organelles)
- * all uppercase
+ * set sequence in all uppercase
+When possible use genomic sequence from NCBI.  
+Match sequence ID in FASTA file with sequence ID in annotation file.  
+Use ID from annotation.  
+Keep IDs in the file "list.tbl".  
+First column in the table is sequence ID and second column is annotation ID.  
 
-Use genomic sequence from NCBI, when possible.  
-Match sequence ID's in FASTA file with sequence ID's in annotation file.  
-Use ID's sequence from annotation.  
-Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000182925.2
-Keep FASTA IDs in the file "list.tbl".  
+Description of assembly is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000182925.2  
 ```
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/182/925/GCF_000182925.2_NC12/GCF_000182925.2_NC12_genomic.fna.gz
@@ -89,8 +90,8 @@ gff_to_gff_subset.pl  --in Neucr2.filtered_proteins.BroadModels.gff3  --out anno
 #check
 /home/tool/gt/bin/gt  gff3validator  annot.gff3
 #reformat
-/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp.gff3  annot.gff3
-mv tmp.gff3 annot.gff3
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
+mv tmp_annot.gff3 annot.gff3
 
 gff3_to_gtf.pl annot.gff3 annot.gtf
 #check
