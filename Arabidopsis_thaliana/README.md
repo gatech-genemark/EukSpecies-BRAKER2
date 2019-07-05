@@ -26,6 +26,7 @@ Download genomic sequence and reformat it:
  * simplified FASTA defline with a first word in defline as a unique sequence ID
  * select only nuclear DNA (exclude organelles)
  * set sequence in all uppercase
+
 When possible use genomic sequence from NCBI.  
 Match sequence ID in FASTA file with sequence ID in annotation file.  
 Use ID from annotation.  
