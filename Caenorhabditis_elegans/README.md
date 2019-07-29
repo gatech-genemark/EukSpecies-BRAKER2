@@ -100,6 +100,10 @@ mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
 
 gzip c_elegans.PRJNA13758.WS271.annotations.gff3
+
+# separate pseudo
+cd $base/annot/
+select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 ```
 
 

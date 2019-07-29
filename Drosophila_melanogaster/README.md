@@ -1,3 +1,4 @@
+:10000
 # Species: _Drosophila_melanogaster_  
 Alex Lomsadze  
 Georgia Institute of Technology  
@@ -100,6 +101,10 @@ mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
 
 gzip dmel-all-no-analysis-*.gff
+
+# separate pseudo
+cd $base/annot/
+select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 ```
 
 

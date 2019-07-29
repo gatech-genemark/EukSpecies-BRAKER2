@@ -102,6 +102,10 @@ mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
 
 gzip Araport11_GFF3_genes_transposons.201606.gff
+
+# separate pseudo
+cd $base/annot/
+select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 ```
 
 

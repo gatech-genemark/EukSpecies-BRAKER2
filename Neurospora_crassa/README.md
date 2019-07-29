@@ -102,6 +102,10 @@ mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
 
 gzip Neucr2.filtered_proteins.BroadModels.gff3
+
+# separate pseudo
+cd $base/annot/
+select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 ```
 
 
