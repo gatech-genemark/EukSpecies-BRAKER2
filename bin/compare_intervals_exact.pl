@@ -12,6 +12,8 @@
 # 	 "star_codon"
 # 	 "stop_codon"
 # Comparison can be done between 2 or 3 files.
+#
+# Optional parameters can be used to account for pseudogenes and repeat regions
 # ==============================================================
 
 use strict;
@@ -20,7 +22,7 @@ use warnings;
 use Getopt::Long qw( GetOptions );
 use Data::Dumper;
 
-my $VERSION = "v1_2019";
+my $VERSION = "v2_2019";
 
 # ------------------------------------------------
 my $v = '';
@@ -31,6 +33,8 @@ my $f2 = '';
 my $f3 = '';
 
 my $pseudo = '';
+my $masked = '';
+my $min_masked = 1000;
 
 my $compare_cds = 0;
 my $compare_introns = 0;
@@ -79,24 +83,8 @@ ParseGFF( $f1, \%h1 );
 ParseGFF( $f2, \%h2 );
 ParseGFF( $f3, \%h3 ) if $f3;
 
-if ($pseudo)
-{
-	my %pseudo_h = LoadPseudo( $pseudo );
-
-	my %intervals = ();
-
-	%intervals = HashKeysToArrIntervals( \%h1 );
-	RemoveOverlappingWithPseudo( \%pseudo_h, \%intervals, 0 );
-
-	%intervals = HashKeysToArrIntervals( \%h2 );
-	RemoveOverlappingWithPseudo( \%pseudo_h, \%intervals, 1, \%h2 );
-
-	if ( $f3 )
-	{
-		%intervals = HashKeysToArrIntervals( \%h3 );
-		RemoveOverlappingWithPseudo( \%pseudo_h, \%intervals, 1, \%h3 );
-	}
-}
+FilterPseudo( $pseudo ) if $pseudo;
+FilterMasked( $masked, $min_masked ) if $masked;
 
 if( !$f3 )
 {
@@ -110,11 +98,63 @@ else
 exit 0;
 
 # ================= subs =========================
-sub RemoveOverlappingWithPseudo
+sub FilterMasked
+{
+	my $ name = shift;
+	my $min = shift;
+
+	my %masked_h = LoadIntervals( $name, $min );
+
+	my %intervals = ();
+	my $label = '';
+
+	%intervals = HashKeysToArrIntervals( \%h1 );
+	$label = "# intervals removed in --f1 due to overlap with masked regions: ";
+	RemoveOverlapping( \%masked_h, \%intervals, 1, $label, \%h1 );
+
+	%intervals = HashKeysToArrIntervals( \%h2 );
+	$label = "# intervals removed in --f2 due to overlap with masked regions: ";
+	RemoveOverlapping( \%masked_h, \%intervals, 1, $label, \%h2 );
+
+	if ( $f3 )
+	{
+		%intervals = HashKeysToArrIntervals( \%h3 );
+		$label = "# intervals removed in --f3 due to overlap with masked regions: ";
+		RemoveOverlapping( \%masked_h, \%intervals, 1, $label, \%h3 );
+	}
+}
+# ------------------------------------------------
+sub FilterPseudo
+{
+	my $ name = shift;
+
+	my %pseudo_h = LoadIntervals( $name, 0 );
+
+	my %intervals = ();
+	my $label = '';
+
+	%intervals = HashKeysToArrIntervals( \%h1 );
+	$label = "# pseudo regions removed due to overlap with --f1: ";
+	RemoveOverlapping( \%pseudo_h, \%intervals, 0, $label );
+	
+	%intervals = HashKeysToArrIntervals( \%h2 );
+	$label = "# intervals removed in --f2 due to overlap with pseudo regions: ";
+	RemoveOverlapping( \%pseudo_h, \%intervals, 1, $label, \%h2 );
+
+	if ( $f3 )
+	{
+		%intervals = HashKeysToArrIntervals( \%h3 );
+		$label = "# intervals removed in --f2 due to overlap with pseudo regions: ";
+		RemoveOverlapping( \%pseudo_h, \%intervals, 1, $label, \%h3 );
+	}
+}
+# ------------------------------------------------
+sub RemoveOverlapping
 {
 	my $aa = shift;
 	my $bb = shift;
 	my $in_bb = shift;
+	my $label = shift;
 	my $ref = shift;
 
 	my @arr = ();
@@ -170,17 +210,27 @@ sub RemoveOverlappingWithPseudo
 		}
 	}
 
+	my $size_before = 0;
+	my $size_after = 0;
+	my $multi_removal = 0;
+
 	if ( $in_bb )
 	{
+		$size_before = scalar ( keys %{$ref} );
+
 		foreach my $key (@arr)
 		{
 			delete $ref->{$key};
 		}
+
+		$size_after = scalar ( keys %{$ref} );
 	}
 	else
 	{
 		foreach my $key ( keys %{$aa} )
 		{
+			$size_before += scalar ( @{$aa->{$key}} );
+
 			my @new_arr = ();
 
 			foreach my $value ( @{$aa->{$key}} )
@@ -194,13 +244,21 @@ sub RemoveOverlappingWithPseudo
 			}
 
 			@{$aa->{$key}} = @new_arr;
+
+			$size_after += scalar (@new_arr);
+		}
+
+		foreach my $key ( keys %hash )
+		{
+			$multi_removal += ( $hash{$key} - 1 );
 		}
 	}
 
 	if ($v)
 	{
 		my $size = scalar @arr;
-		print "# total overlaps removed: $size\n";
+		print "$label $size\n";
+		print "# size before, after and multi removal: $size_before $size_after $multi_removal\n";	
 #		print Dumper(\@arr);
 	}
 }
@@ -485,9 +543,9 @@ sub TestCount
 	die "error in counting: $count $size\n" if ( $size != $count );
 }
 # ------------------------------------------------
-sub LoadPseudo
+sub LoadIntervals
 {
-	my ($name, $ref) = @_;
+	my ($name, $min) = @_;
 
 	my %h = ();
 
@@ -510,9 +568,13 @@ sub LoadPseudo
 			my $strand = $5;
 			my $ph     = $6;
 
+			next if ( $end - $start + 1 < $min ); 
+
 			push @{$h{$id}}, [$start, $end];
 			$in_regions += 1;
 		}
+		else
+			{ die "error, unexpected line format found: $line"; }
 	}
 	close $IN;
 
@@ -565,8 +627,24 @@ sub LoadPseudo
 
 	if ($v)
 	{
-		print "# pseudo regions in: $in_regions\n";
+		print "# regions in: $in_regions\n";
 		print "# regions after merging: $out_regions\n";
+
+		if ($debug)
+		{
+			my $sum = 0;
+			foreach my $key (keys %h )
+			{
+				$sum += (scalar @{$h{$key}});
+				print "# per sequence: ". $key ."\t". (scalar @{$h{$key}}) ."\n";
+
+				foreach my $value (@{$h{$key}})
+				{
+					print "###". $key ."\t". $value->[0] ."\t". $value->[1] ."\n";
+				}
+			}
+			print "# total $sum\n";
+		}
 	}
 
 #	print Dumper(\%h);
@@ -749,7 +827,9 @@ sub ParseCMD
 		'unique2'   => \$unique2,
 		'unique3'   => \$unique3,
 		'original=i' => \$original,
-		'pseudo=s'  => \$pseudo,
+		'pseudo=s'   => \$pseudo,
+		'masked=s'   => \$masked,
+		'min_mask=i' => \$min_masked,
 	);
 
 	die "error on command line\n" if( !$opt_results );
@@ -769,7 +849,7 @@ sub ParseCMD
 	}
 	elsif ($count > 1)
 	{
-		die "erros, more thean one comparision type was specifed on command line\n";
+		die "error, more thean one comparision type was specifed on command line\n";
 	}
 
 	$v = 1 if $debug;
@@ -791,8 +871,13 @@ Optional:
 
    --pseudo [name] file with pseudogene coordinates in GFF style format;
                    with this option program
-                   excludes pseudo regions overlaping with --f1
-                   excludes CDS region from --f2 and --f3 which overlap pseudo regions
+                   excludes pseudo regions overlaping with region from --f1
+                   excludes regions from --f2 and --f3 which overlap pseudo regions
+
+   --masked [name] file with coordinates of masked regions
+                   with this option program any region which overlaps masking
+                   is excluded from calculations
+   --min_mask [$min_masked] minium length of the masked region to use
 
 Default comparision is done for 'CDS' type
 

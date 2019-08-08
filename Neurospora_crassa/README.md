@@ -106,6 +106,10 @@ gzip Neucr2.filtered_proteins.BroadModels.gff3
 # separate pseudo
 cd $base/annot/
 select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
+
+# masking coordinates
+cd $base/annot/
+soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
 
 
