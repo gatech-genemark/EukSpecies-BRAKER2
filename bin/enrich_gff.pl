@@ -29,6 +29,7 @@ my $v = '';
 my $debug = '';
 my $warnings = '';
 my $cds_gene_only = '';
+my $min_intron = 10;
 # --------------------------------------------
 Usage() if ( @ARGV < 1 );
 ParseCMD();
@@ -445,6 +446,17 @@ sub CreateCdsIntrons
 				$current[7] = $ref->[$i][7];
 			}
 
+			if ( $current[4] - $current[3] + 1 < $min_intron )
+			{
+				$current[2] = "gap";
+
+				if ($warnings)
+				{
+					print "warning, distance between CDS-CDS is below $min_intron: gap was introduced\n";
+					print Dumper(\@current);
+				}
+			}
+
 			push @arr, [@current];
 		}
 
@@ -521,10 +533,21 @@ sub SplitByMRNA
 	my $ref = shift;
 	my $h_mrna = shift;
 
+	my %other_transcripts = ();
+
 	foreach my $entry (@{$ref})
 	{
 		next if ( $entry->[2] eq "mRNA" );
 		next if ( $entry->[2] eq "gene" );
+
+		if ( $entry->[2] eq "nc_primary_transcript")
+		{
+			if ( $entry->[8] =~ /ID=(\S+?);/ )
+			{
+				$other_transcripts{$1} = 1;
+				next;
+			}
+		}
 
 		if ( $entry->[8] =~ /Parent=(\S+?);/ or $entry->[8] =~ /Parent=(\S+)/)
 		{
@@ -537,7 +560,14 @@ sub SplitByMRNA
 					push @{$h_mrna->{$value}}, [ @{$entry} ];
 				}
 				else
-					{ print Dumper($ref); die "error, feature not in mRNA:\n$value\n"; }
+				{
+					if ( exists $other_transcripts{$value} )
+					{
+						next;
+					}
+					else
+						{ print Dumper($ref); die "error, feature not in mRNA:\n$value\n"; }
+				}
 			}
 		}
 		else
@@ -597,7 +627,7 @@ sub GetGeneID
 		{
 			if ( !$gene )
 			{
-				if ( $entry->[8] =~ /ID=(\S+?);/ )
+				if ( $entry->[8] =~ /ID=(\S+?);/ ) 
 				{
 					$gene = $1;
 
@@ -709,6 +739,7 @@ sub ParseCMD
 		'debug'    => \$debug,
 		'warnings' => \$warnings,
 		'cds_gene_only' => \$cds_gene_only,
+		'min_intron=i'  => \$min_intron,
         );
 
 	die "error on command line\n" if( !$opt_results );
@@ -728,6 +759,7 @@ $0  --in [name]  --out [name]
   and enriches annotation by adding ...
 
   --cds_gene_only    output only protein coding genes
+  --min_intron [$min_intron]  minimum length of intron to calculate from CDS-CDS
 
 General:
   --verbose

@@ -24,7 +24,7 @@ open( my $IN, $gff3) or die "error on open file: $gff3\n";
 open( my $OUT, ">", $gtf) or die "error on open file: $gtf\n";
 while(<$IN>)
 {
-	if ( /\tCDS\t/ )
+	if ( /\tCDS\t/ or /\tstart_codon\t/ or /\tstop_codon\t/ or /\tintron\t/ )
 	{
 		my $trans = '';
 
