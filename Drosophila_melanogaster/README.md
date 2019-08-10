@@ -91,14 +91,21 @@ gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out tmp_annot.gff3 
 compare_intervals_exact.pl  --f1 annot.gff3  --f2 tmp_annot.gff3
 rm  tmp_annot.gff3
 
-gff3_to_gtf.pl  annot.gff3  annot.gtf
+enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds 
+gff3_to_gtf.pl ref.gff3 ref.gtf
+ln -s ref.gtf annot.gtf
+
+# check
 # eval validate is not handling correctly transspliced genes on different strands
 # do not use "-f" fixed by eval version
+
+compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
 /home/braker/src/eval-2.2.8/validate_gtf.pl -c annot.gtf
-compare_intervals_exact.pl  --f1 annot.gff3  --f2 annot.gtf
 
 mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
+mv ref.gff3   ../annot/
+mv ref.gtf    ../annot
 
 gzip dmel-all-no-analysis-*.gff
 

@@ -91,13 +91,18 @@ rm tmp_annot.gff3
 /home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
 
-gff3_to_gtf.pl annot.gff3 annot.gtf
+enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds 
+gff3_to_gtf.pl ref.gff3 ref.gtf
+ln -s ref.gtf annot.gtf
+
+# check
 compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
-#check
 /home/braker/src/eval-2.2.8/validate_gtf.pl -c annot.gtf
 
 mv annot.gff3 ../annot/
 mv annot.gtf  ../annot/
+mv ref.gff3   ../annot/
+mv ref.gtf    ../annot
 
 gzip c_elegans.PRJNA13758.WS271.annotations.gff3
 
