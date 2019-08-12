@@ -5,11 +5,11 @@
 # update 2019
 #
 # Enrich GFF3 file:
-#     * add introns, if missing
+#     * add introns; compare with existing
 #     * separate intorns in UTRs from introns between CDS
 #     * add start and stop codons
 #     * add exon type label: sinle, inititial, internal or terminal
-#     * add splice site dinucleotides:  gt_ag, gc_ag, etc to intons
+#     * add splice site dinucleotides:  gt_ag, gc_ag, etc to introns
 #     * add start and stop triplets to start/stop codon records 
 #     * add complete or partial gene label to gene
 # --------------------------------------------
@@ -30,6 +30,7 @@ my $debug = '';
 my $warnings = '';
 my $cds_gene_only = '';
 my $min_intron = 10;
+my $seq = '';
 # --------------------------------------------
 Usage() if ( @ARGV < 1 );
 ParseCMD();
@@ -42,6 +43,14 @@ my $count_CDS_genes = 0;
 
 open( my $IN, $in ) or die "error om open file $in: $!\n";
 open( my $OUT, ">", $out ) or die "error om open file $out: $!\n";
+
+my %genome = ();
+if ($seq)
+{
+	LoadGenome( $seq, \%genome );
+}
+
+print "# in out files are ready for processing\n" if $v;
 
 while(my $line = <$IN>)
 {
@@ -67,6 +76,14 @@ while(my $line = <$IN>)
 			$count_CDS_genes += 1;
 
 			PrintRecord(\@new_record);
+
+			if ($v)
+			{
+				if ( $count_CDS_genes % 1000 == 0 )
+				{
+					print "# cds genes processed: $count_CDS_genes\n";
+				}
+			}
 		}
 		else
 		{
@@ -109,28 +126,37 @@ if($v)
 	print "# CDS genes in: $count_CDS_genes\n";
 }
 
-print "done\n";
+print "done\n" if $v;
 
 # --------------------------------------------
 sub EnrichRecord
 {
+	# ref on array of arrays - all from one gene
 	my $ref = shift;
 
 	my @new_r = ();
 
+	# add gene line
 	my $gene_id = GetGeneID($ref, \@new_r);
+	# prepare mrna lines
 	my %mrna = GetMrnaIDs($ref);
-	
+	# sort other lines by mrna
 	SplitByMRNA( $ref, \%mrna );
 
 	foreach my $key ( keys %mrna )
 	{
-		push @new_r, [ @{$mrna{$key}[0]} ];
-
 		my @cds = SelectCDSsorted( $mrna{$key} );
-		my @introns = CreateCdsIntrons( \@cds );
-		my @start_codon = CreateStartCodon( \@cds );
-		my @stop_codon = CreateStopCodon( \@cds );
+
+		my @introns = ();
+		my @start_codon = ();
+		my @stop_codon = ();
+
+		if ( @cds > 0 )
+		{
+			@introns = CreateCdsIntrons( \@cds );
+			@start_codon = CreateStartCodon( \@cds );
+			@stop_codon = CreateStopCodon( \@cds );
+		}
 
 		foreach my $entry (@cds)
 		{
@@ -152,10 +178,14 @@ sub EnrichRecord
 			$entry->[8] = "Parent=". $key;
 		}
 
-		push @new_r, @cds;
-		push @new_r, @introns;
-		push @new_r, @start_codon;
-		push @new_r, @stop_codon;
+		if ( @cds > 0 )
+		{
+			push @new_r, [ @{$mrna{$key}[0]} ];
+			push @new_r, @cds;
+			push @new_r, @introns;
+			push @new_r, @start_codon;
+			push @new_r, @stop_codon;
+		}
 	}
 
 	return @new_r;
@@ -163,15 +193,20 @@ sub EnrichRecord
 # --------------------------------------------
 sub CreateStopCodon
 {
+	# ref on array of arrays
 	my $ref = shift;
 
+	# output
 	my @arr = ();
+
+	# first CDS from the left
 	my @current = @{$ref->[0]};
 
 	if ( $current[6] eq '+' )
 	{
 		my $idx = (scalar @{$ref}) - 1;
 
+		# last CDS from the left
 		@current = @{$ref->[$idx]};
 
 		if ( $current[4] - $current[3] + 1 >= 3 )
@@ -184,19 +219,22 @@ sub CreateStopCodon
 		}
 		else
 		{
+			# last CDS from the left
+
 			if ( $current[4] - $current[3] + 1 == 2 )
 			{
 				$current[2] = "stop_codon";
 				$current[3] = $current[4] - 1;
-				$current[7] = 0;
+				$current[7] = 2;
 
 				push @arr, [ @current ];
 
+				# before last CDS from left
 				@current = @{$ref->[$idx - 1]};
 
 				$current[2] = "stop_codon";
 				$current[3] = $current[4];
-				$current[7] = 1;
+				$current[7] = 0;
 
 				push @arr, [ @current ];
                         }
@@ -204,7 +242,7 @@ sub CreateStopCodon
 			{
 				$current[2] = "stop_codon";
 				$current[3] = $current[4];
-				$current[7] = 0;
+				$current[7] = 1;
 
 				push @arr, [ @current ];
 
@@ -212,7 +250,7 @@ sub CreateStopCodon
 
 				$current[2] = "stop_codon";
 				$current[3] = $current[4] - 1;
-				$current[7] = 2;
+				$current[7] = 0;
 
 				push @arr, [ @current ];
 			}
@@ -220,12 +258,14 @@ sub CreateStopCodon
 			if ($warnings)
 			{
 				print "warning, split stop codon detected:\n";
-				print Dumper(\@arr);
+				print Dumper(\@arr) if $debug;
 			}
 		}
 	}
 	elsif ( $current[6] eq '-' )
 	{
+		# first CDS from the left
+
 		if ( $current[4] - $current[3] + 1 >= 3 )
 		{
 			$current[2] = "stop_codon";
@@ -272,7 +312,7 @@ sub CreateStopCodon
 			if ($warnings)
 			{
 				print "warning, split stop codon detected:\n";
-				print Dumper(\@arr);
+				print Dumper(\@arr) if $debug;
 			}
 		}
 	}
@@ -282,13 +322,18 @@ sub CreateStopCodon
 # --------------------------------------------
 sub CreateStartCodon
 {
+	# ref on array of array - values of CDS from one mrna - sorted
 	my $ref = shift;
 
+	# output array of arrays
 	my @arr = ();
+
+	# this is first CDS on the left side
 	my @current = @{$ref->[0]};
 
 	if ( $current[6] eq '+' )
 	{
+		# complete start codon
 		if ( $current[4] - $current[3] + 1 >= 3 )
 		{
 			$current[2] = "start_codon";
@@ -299,6 +344,11 @@ sub CreateStartCodon
 		}
 		else
 		{
+			if ( @{$ref} < 2 )
+				{ die "error, not enough data to position start codon\n"; }
+
+			# to do : check strand
+
 			if ( $current[4] - $current[3] + 1 == 2 )
 			{
 				$current[2] = "start_codon";
@@ -307,6 +357,7 @@ sub CreateStartCodon
 
 				push @arr, [ @current ];
 
+				# mode to second CDS from left
 				@current = @{$ref->[1]};
 
 				$current[2] = "start_codon";
@@ -323,6 +374,7 @@ sub CreateStartCodon
 
 				push @arr, [ @current ];
 
+				# mode to second CDS from left
 				@current = @{$ref->[1]};
 
 				$current[2] = "start_codon";
@@ -335,7 +387,7 @@ sub CreateStartCodon
 			if ($warnings)
 			{
 				print "warning, split start codon detected:\n";
-				print Dumper(\@arr);
+				print Dumper(\@arr) if $debug;
 			}
 		}
 	}
@@ -343,6 +395,7 @@ sub CreateStartCodon
 	{
 		my $idx = (scalar @{$ref}) - 1;
 
+		# this is last CDS from the left
 		@current = @{$ref->[$idx]};
 
 		if ( $current[4] - $current[3] + 1 >= 3 )
@@ -355,6 +408,9 @@ sub CreateStartCodon
 		}
 		else
 		{
+			if ( @{$ref} < 2 )
+				{ die "error, not enough data to position start codon\n"; }
+
 			if ( $current[4] - $current[3] + 1 == 2 )
 			{
 				$current[2] = "start_codon";
@@ -363,6 +419,7 @@ sub CreateStartCodon
 
 				push @arr, [ @current ];
 
+				# before last CDS from left
 				@current = @{$ref->[$idx - 1]};
 
 				$current[2] = "start_codon";
@@ -379,6 +436,7 @@ sub CreateStartCodon
 
                                 push @arr, [ @current ];
 
+				# before last CDS from left
                                 @current = @{$ref->[$idx - 1]};
 
                                 $current[2] = "start_codon";
@@ -391,7 +449,7 @@ sub CreateStartCodon
 			if ($warnings)
 			{
 				print "warning, split start codon detected:\n";
-				print Dumper(\@arr);
+				print Dumper(\@arr) if $debug;
 			}
 		}
 	} 
@@ -416,34 +474,41 @@ sub PrintRecord
 # --------------------------------------------
 sub CreateCdsIntrons
 {
+	# ref on array of arrys - CDS values from GFF file - one mrna - sorted
 	my $ref = shift;
 
 	my $size = scalar @{$ref};
 
+	# ref on arry of arrays with introns - output
 	my @arr = ();
 
-	return @arr if ($size == 1);
+	# two CDS minimum for intron deriviation
+	return @arr if ($size < 2);
 
 	my $i = 0;
 	my $j = 1;
 
 	while( $j < $size)
 	{
+		# two exons must be on the same strand
+
 		if ( $ref->[$i][6] eq $ref->[$j][6] )
 		{
 			my @current = @{$ref->[$i]};
+
 			$current[2] = "intron";
 			$current[3] = $ref->[$i][4] + 1;
 			$current[4] = $ref->[$j][3] - 1;
 
 			if ( $ref->[$i][6] eq "+" )
 			{
-				$current[7] = 3 - $ref->[$i][7];
-				$current[7] = 0 if ( $current[7] == 0 );
+				$current[7] = 3 - $ref->[$j][7];
+				$current[7] = 0 if ( $current[7] == 3 );
 			}
 			elsif ( $ref->[$i][6] eq "-" )
 			{
-				$current[7] = $ref->[$i][7];
+				$current[7] = 3 - $ref->[$i][7];
+				$current[7] = 0 if ( $current[7] == 3 );
 			}
 
 			if ( $current[4] - $current[3] + 1 < $min_intron )
@@ -452,12 +517,16 @@ sub CreateCdsIntrons
 
 				if ($warnings)
 				{
-					print "warning, distance between CDS-CDS is below $min_intron: gap was introduced\n";
-					print Dumper(\@current);
+					print "warning, distance between CDS-CDS is below $min_intron: intron was replased by gap label\n";
+					print Dumper(\@current) if $debug;
 				}
 			}
 
 			push @arr, [@current];
+		}
+		else
+		{
+			print "warning, oposite strand CDS were detected: intron is not assigned in such cases\n" if $warnings;
 		}
 
 		$i += 1;
@@ -469,8 +538,10 @@ sub CreateCdsIntrons
 # --------------------------------------------
 sub SelectCDSsorted
 {
+	# ref on array of arrays - GFF values one gene
 	my $ref = shift;
 
+	# put here only CDS lines
 	my @arr = ();
 
 	foreach my $entry (@{$ref})
@@ -484,9 +555,11 @@ sub SelectCDSsorted
 		}
 	}
 
+	# is it possible to have trans-splicing from different chromosomes?
+	
 	@arr = sort{ $a->[0] cmp $b->[0] || $a->[3] <=> $b->[3] } @arr;
 
-	if ( $warnings )
+	if ( $warnings and (@arr > 0))
 	{
 		my $i = 0;
 		my $j = 1;
@@ -504,7 +577,7 @@ sub SelectCDSsorted
 		}
 
 		my $strand = $arr[0][6];
-		my $seq = $arr[0][0];
+		my $seqid = $arr[0][0];
 
 		foreach my $current (@arr)
 		{
@@ -517,9 +590,9 @@ sub SelectCDSsorted
 
 		foreach my $current (@arr)
 		{
-			if ( $seq ne $current->[0] )
+			if ( $seqid ne $current->[0] )
 			{
-				print "warning, two seqid detected in one mRNA: $strand  $current->[0]\n";
+				print "warning, two seqid detected in one mRNA: $seqid  $current->[0]\n";
 				last;
 			}
 		}
@@ -530,24 +603,19 @@ sub SelectCDSsorted
 # --------------------------------------------
 sub SplitByMRNA
 {
+	# ref array of arrays with GGF values of one gene
 	my $ref = shift;
+	# ref on hash of arrays - with GFF values separated by mrna ID
 	my $h_mrna = shift;
 
+	# some mRNA amy be non-coding - keep names here
 	my %other_transcripts = ();
 
 	foreach my $entry (@{$ref})
 	{
 		next if ( $entry->[2] eq "mRNA" );
 		next if ( $entry->[2] eq "gene" );
-
-		if ( $entry->[2] eq "nc_primary_transcript")
-		{
-			if ( $entry->[8] =~ /ID=(\S+?);/ )
-			{
-				$other_transcripts{$1} = 1;
-				next;
-			}
-		}
+		next if ( $entry->[2] eq "nc_primary_transcript" );
 
 		if ( $entry->[8] =~ /Parent=(\S+?);/ or $entry->[8] =~ /Parent=(\S+)/)
 		{
@@ -577,15 +645,15 @@ sub SplitByMRNA
 # --------------------------------------------
 sub GetMrnaIDs
 {
+	# ref on array of arrays - GFF values one gene
 	my $ref = shift;
 
-	# one or many per record
-
+	# one or many mRNA per record 
 	my %mRNA = ();
 
 	foreach my $entry (@{$ref})
 	{
-		if ( $entry->[2] eq "mRNA" )
+		if (( $entry->[2] eq "mRNA" ) or ( $entry->[2] eq "nc_primary_transcript" ))
 		{
 			if ( $entry->[8] =~ /ID=(\S+?);/ )
 			{
@@ -614,22 +682,23 @@ sub GetMrnaIDs
 # --------------------------------------------
 sub GetGeneID
 {
+	# ref of array of arrays of GFF values from one gene
 	my $ref = shift;
+	# refernce on array of arrays - output
 	my $arr_r = shift;
 
 	# one "gene" per record
-
-	my $gene = '';
+	my $gene_id = '';
 
 	foreach my $entry (@{$ref})
 	{
 		if ( $entry->[2] eq "gene" )
 		{
-			if ( !$gene )
+			if ( !$gene_id )
 			{
 				if ( $entry->[8] =~ /ID=(\S+?);/ ) 
 				{
-					$gene = $1;
+					$gene_id = $1;
 
 					push @{$arr_r}, [@{$entry}];
 				}
@@ -637,19 +706,25 @@ sub GetGeneID
 					{ die "error, gene ID field not found in: $entry->[8]\n"; }
 			}
 			else
-				{ die "error, gene entry duplication was detected in record: $gene\n"; }
+				{ die "error, gene entry duplication was detected in record: $gene_id\n"; }
 		}
 	}
 
-	return $gene;
+	if ( ! $gene_id )
+		{ die "error, gene id is missing:\n"; }
+
+	return $gene_id;
 }
 # --------------------------------------------
 sub IsCDSgene
 {
+	# ref on array of arrays - all lines from one gene
 	my $ref = shift;
 
 	my $gene_count = 0;
 	my $cds_count = 0;
+
+	my $gname = '';
 
 	foreach my $entry (@{$ref})
 	{
@@ -660,13 +735,14 @@ sub IsCDSgene
 		elsif ( $entry->[2] eq "gene" )
 		{
 			$gene_count += 1;
+			$gname = $entry->[8]
 		}
 	}
 
 	if ( $gene_count > 1 )
 	{
 		print Dumper($ref);
-		die "error, gene label duplication was detected:\n";
+		die "error, gene label duplication was detected:\n$gname\n";
 	}
 
 	if ( $gene_count == 1 and $cds_count > 0 )
@@ -681,31 +757,38 @@ sub IsCDSgene
 # --------------------------------------------
 sub CheckForValidGFF
 {
-	my $ref = shift;
 	my $str = shift;
+	my $ref = shift;
 
 	# seqid 1
 	if ( $ref->[0] !~ /^\w+$/ )
-		{ die "error, unexpect seqid found:\n$str\n"; }
+		{ die "error, unexpected seqid format found:\n$str\n"; }
 
 	# start 4
 	if ( $ref->[3] !~ /^\d+$/ )
-		{ die "error, unexpect start found:\n$str\n"; }
+		{ die "error, unexpected start format found:\n$str\n"; }
 
 	# end 5
 	if ( $ref->[4] !~ /^\d+$/ )
-		{ die "error, unexpect end found:\n$str\n"; }
+		{ die "error, unexpected end format found:\n$str\n"; }
 
 	# start <= end
 	if ( $ref->[3] > $ref->[4] )
 		{ die "error, start is more than end:\n$str\n"; }
 
+	# strand 6
 	if ( $ref->[6] !~ /^[+-.]$/ )
 		{ die "error, wrong strand value:\n$str\n"; }
+
+	# phase 7
+	if ( $ref->[7] !~ /^[.012]$/ )
+		 { die "error, wrong phase value:\n$str\n"; }
 }
 # --------------------------------------------
 sub AddLineToRecord
 {
+	# str - line from GFF3 file
+	# ref on array of arrays - put all split lines from one gene here
 	my $str = shift;
 	my $ref = shift;
 
@@ -718,15 +801,27 @@ sub AddLineToRecord
 	if ( $size != 8 and $size != 9 )
 		{ die "error, unexpected number of TABs found:\n$str\n"; }
 
-	CheckForValidGFF( \@arr, $str ) if $debug;
+	CheckForValidGFF( $str, \@arr ) if $debug;
 
 	push @{$ref}, [@arr];
+}
+# ------------------------------------------------
+sub LoadGenome
+{
+	my $name = shift;
+	my $ref = shift;
 }
 # ------------------------------------------------
 sub CheckBeforeRun
 {
 	die "error, file not found: option --in $in\n" if( ! -e $in );
 	die "error, output file name matches input file: $in $out\n" if ( $out eq $in );
+
+	if ( $seq )
+	{
+		die "error, file not found: option --seq $seq\n" if( ! -e $seq );
+		die "error, output file name matches input file: $seq $out\n" if ( $out eq $seq );
+	}
 }
 # ------------------------------------------------
 sub ParseCMD
@@ -740,6 +835,7 @@ sub ParseCMD
 		'warnings' => \$warnings,
 		'cds_gene_only' => \$cds_gene_only,
 		'min_intron=i'  => \$min_intron,
+		'seq=s'   => \$seq,
         );
 
 	die "error on command line\n" if( !$opt_results );
@@ -758,8 +854,10 @@ $0  --in [name]  --out [name]
   This program takes as input 'nice' GFF3 formatted genome annotation file
   and enriches annotation by adding ...
 
+Optional 
   --cds_gene_only    output only protein coding genes
   --min_intron [$min_intron]  minimum length of intron to calculate from CDS-CDS
+  --seq [name]       file with sequence in FASTA format
 
 General:
   --verbose
