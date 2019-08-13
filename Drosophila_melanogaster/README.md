@@ -119,4 +119,8 @@ soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\t
 
 ```
 
-
+Create a version of annotation without Y chromosome
+```
+cd $base/annot/
+grep -v "^Y" annot.gtf > annot_no_Y.gtf
+```
