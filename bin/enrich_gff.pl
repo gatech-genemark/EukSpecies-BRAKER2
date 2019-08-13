@@ -135,13 +135,18 @@ sub EnrichRecord
 	my $ref = shift;
 
 	my @new_r = ();
+	my @gene = ();
 
 	# add gene line
-	my $gene_id = GetGeneID($ref, \@new_r);
+	my $gene_id = GetGeneID($ref, \@gene);
+
 	# prepare mrna lines
 	my %mrna = GetMrnaIDs($ref);
+
 	# sort other lines by mrna
 	SplitByMRNA( $ref, \%mrna );
+
+	AddCountToAttrInHashMRNA( \%mrna );
 
 	foreach my $key ( keys %mrna )
 	{
@@ -156,30 +161,19 @@ sub EnrichRecord
 			@introns = CreateCdsIntrons( \@cds );
 			@start_codon = CreateStartCodon( \@cds );
 			@stop_codon = CreateStopCodon( \@cds );
-		}
 
-		foreach my $entry (@cds)
-		{
-			$entry->[8] = "Parent=". $key;
-		}
+			foreach my $entry (@cds)          { $entry->[8] = "Parent=". $key .";"; }
+			foreach my $entry (@introns)      { $entry->[8] = "Parent=". $key .";"; }
+			foreach my $entry (@start_codon)  { $entry->[8] = "Parent=". $key .";"; }
+			foreach my $entry (@stop_codon)   { $entry->[8] = "Parent=". $key .";"; }
 
-		foreach my $entry (@introns)
-		{
-			$entry->[8] = "Parent=". $key;
-		}
+			AddLabelsToCDS(\@cds);
+			AddCountToAttr(\@cds);
+			AddCountToAttr(\@introns);
+			AddCountToAttr(\@start_codon);
+			AddCountToAttr(\@stop_codon);
 
-		foreach my $entry (@start_codon)
-		{
-			$entry->[8] = "Parent=". $key;
-		}
-
-		foreach my $entry (@stop_codon)
-		{
-			$entry->[8] = "Parent=". $key;
-		}
-
-		if ( @cds > 0 )
-		{
+			push @new_r, @gene;
 			push @new_r, [ @{$mrna{$key}[0]} ];
 			push @new_r, @cds;
 			push @new_r, @introns;
@@ -189,6 +183,87 @@ sub EnrichRecord
 	}
 
 	return @new_r;
+}
+# --------------------------------------------
+sub AddCountToAttr
+{
+	my $ref = shift;
+
+	my $size = scalar @{$ref};
+
+	return if ( $size == 0 );
+
+	if ( $ref->[0][6] eq "+" )
+	{
+		for( my $i = 0; $i < $size; $i += 1 )
+		{
+			$ref->[$i][8] .= ";" if ( $ref->[$i][8] !~ m/;$/ );
+			$ref->[$i][8] .= "count=". ($i+1) ."_". $size .";";
+		}
+	}
+	elsif ( $ref->[0][6] eq "-" )
+	{
+		for( my $i = $size -1; $i >= 0; $i -= 1 )
+		{
+			$ref->[$i][8] .= ";" if ( $ref->[$i][8] !~ m/;$/ );
+			$ref->[$i][8] .= "count=". ($i+1) ."_". $size .";";
+		}
+	}
+}
+# --------------------------------------------
+sub AddCountToAttrInHashMRNA
+{
+	my $ref = shift;
+
+	my $size = scalar ( keys %{$ref} );
+	my $i = 0;
+
+	foreach my $key ( keys %{$ref} )
+	{
+		$ref->{$key}[0][8] .= ";" if ( $ref->{$key}[0][8] !~ m/;$/ );
+		$ref->{$key}[0][8] .= "count=". ($i+1) ."_". $size .";";
+
+		$i += 1;
+	}
+}
+# --------------------------------------------
+sub AddLabelsToCDS
+{
+	my $ref = shift;
+
+	my $size = scalar @{$ref};
+
+	if ( $size == 1 )
+	{
+		$ref->[0][8] .= ";" if ( $ref->[0][8] !~ /;$/ );
+
+		$ref->[0][8] .= "cds_type=Single;";
+	}
+	elsif ( $size > 1 )
+	{
+		if ( $ref->[0][6] eq "+" )
+		{
+			$ref->[0][8] .= ";" if ( $ref->[0][8] !~ /;$/ );
+			$ref->[0][8] .= "cds_type=Initial;";
+
+			$ref->[$size -1][8] .= ";" if ( $ref->[$size -1][8] !~ /;$/ );
+			$ref->[$size -1][8] .= "cds_type=Terminal;";
+		}
+		elsif ( $ref->[0][6] eq "-" )
+		{
+			$ref->[$size -1][8] .= ";" if ( $ref->[$size -1][8] !~ /;$/ );
+			$ref->[$size -1][8] .= "cds_type=Initial;";
+
+			$ref->[0][8] .= ";" if ( $ref->[0][8] !~ /;$/ );
+			$ref->[0][8]        .= "cds_type=Terminal;";
+		}
+
+		for( my $i = 1; $i < $size -1; $i += 1 )
+		{
+			$ref->[$i][8] .= ";" if ( $ref->[$i][8] !~ /;$/ );
+			$ref->[$i][8] .= "cds_type=Internal;";
+		}
+	}
 }
 # --------------------------------------------
 sub CreateStopCodon

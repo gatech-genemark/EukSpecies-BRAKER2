@@ -36,6 +36,10 @@ my $pseudo = '';
 my $masked = '';
 my $min_masked = 1000;
 
+my $compare_single = 0;
+my $compare_initial = 0;
+my $compare_internal = 0;
+my $compare_terminal = 0;
 my $compare_cds = 0;
 my $compare_introns = 0;
 my $compare_donors = 0;
@@ -375,6 +379,10 @@ sub Compare3
 		print "#in\tmatch\tunique\t\%\tStops\n"     if $compare_stops;
 		print "#in\tmatch\tunique\t\%\tDonors\n"    if $compare_donors;
 		print "#in\tmatch\tunique\t\%\tAcceptors\n" if $compare_acceptors;
+		print "#in\tmatch\tunique\t\%\tSingle-CDS\n" if $compare_single;
+		print "#in\tmatch\tunique\t\%\tInitial-CDS\n" if $compare_initial;
+		print "#in\tmatch\tunique\t\%\tInternal-CDS\n" if $compare_internal;
+		print "#in\tmatch\tunique\t\%\tTerminal-CDS\n" if $compare_terminal;
 	}
 
 	print "\n";
@@ -502,6 +510,10 @@ sub Compare2
 		print "#in\tmatch\tunique\t\%\tStops\n"     if $compare_stops;
 		print "#in\tmatch\tunique\t\%\tDonors\n"    if $compare_donors;
 		print "#in\tmatch\tunique\t\%\tAcceptors\n" if $compare_acceptors;
+		print "#in\tmatch\tunique\t\%\tSingle-CDS\n" if $compare_single;
+		print "#in\tmatch\tunique\t\%\tInitial-CDS\n" if $compare_initial;
+		print "#in\tmatch\tunique\t\%\tInternal-CDS\n" if $compare_internal;
+		print "#in\tmatch\tunique\t\%\tTerminal-CDS\n" if $compare_terminal;
 	}
 
 	print "\n";
@@ -664,7 +676,7 @@ sub ParseGFF
 
 		next if ( $line !~ /\t/ );
 		
-		if( $line =~ /^(\S+)\t\S+\t(\S+)\t(\d+)\t(\d+)\t\S+\t([-+.])\t(\S+)\s*/ )
+		if( $line =~ /^(\S+)\t\S+\t(\S+)\t(\d+)\t(\d+)\t\S+\t([-+.])\t(\S+)(\t(.*)|\s*)$/ )
 		{
 			my $id     = $1;
 			my $type   = $2;
@@ -672,31 +684,31 @@ sub ParseGFF
 			my $end    = $4;
 			my $strand = $5;
 			my $ph     = $6;
+			my $attr   = $7;
+
+			$attr = '' if ( !defined $attr );
+			$attr =~ s/\t//;
 
 			if ( $compare_cds and ( $type eq "CDS") )
-			{
-				;
-			}
+				{ ; }
 			elsif ( $compare_introns and ( $type =~ /^[Ii]ntron/) )
-			{
-				;
-			}
+				{ ; }
 			elsif ( $compare_starts and ( $type =~ /^[Ss]tart_codon/) )
-			{
-				;
-			}
+				{ ; }
 			elsif ( $compare_stops and ( $type =~ /^[Ss]top_codon/) )
-			{
-				;
-			}
+				{ ; }
 			elsif ( $compare_donors and ( $type =~ /^[Ii]ntron/) )
-			{
-				;
-			}
+				{ ; }
 			elsif ( $compare_acceptors and ( $type =~ /^[Ii]ntron/) )
-			{
-				;
-			}
+				{ ; }
+			elsif ( $compare_single and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
+				{ ; }
+			elsif ( $compare_initial and ( $attr =~ /(cds_type=[Ii]nitial|cds_type \"[Ii]nitial\")/ ))
+				{ ; }
+			elsif ( $compare_internal and ( $attr =~ /(cds_type=[Ii]nternal|cds_type \"[Ii]nternal\")/ ))
+				{ ; }
+			elsif ( $compare_terminal and ( $attr =~ /(cds_type=[Tt]erminal|cds_type \"[Tt]erminal\")/ ))
+				{ ; }
 			else
 				{ next; }
 
@@ -765,6 +777,10 @@ sub ParseGFF
 		print "# Stops in file $name: ". (scalar keys %$ref) ."\n" if $compare_stops;
 		print "# Donors in file $name: ". (scalar keys %$ref) ."\n" if $compare_donors;
 		print "# Acceptors in file $name: ". (scalar keys %$ref) ."\n" if $compare_acceptors;
+		print "# Single-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_single;
+		print "# Initial-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_initial;
+		print "# Internal-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_internal;
+		print "# Terminal-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_terminal;
 	}
 	
 #	print Dumper($ref) if $debug;
@@ -830,6 +846,10 @@ sub ParseCMD
 		'pseudo=s'   => \$pseudo,
 		'masked=s'   => \$masked,
 		'min_mask=i' => \$min_masked,
+		'single'     => \$compare_single,
+		'initial'    => \$compare_initial,
+		'internal'   => \$compare_internal,
+		'terminal'   => \$compare_terminal,
 	);
 
 	die "error on command line\n" if( !$opt_results );
@@ -842,6 +862,10 @@ sub ParseCMD
 	$count += 1 if $compare_starts;
 	$count += 1 if $compare_stops;
 	$count += 1 if $compare_cds;
+	$count += 1 if $compare_single;
+	$count += 1 if $compare_initial;
+	$count += 1 if $compare_internal;
+	$count += 1 if $compare_terminal;
 
 	if ($count == 0 )
 	{
@@ -887,6 +911,11 @@ Default comparision is done for 'CDS' type
    --stops       compare fields of 'stop_codon' type
    --don         compare donors using 'intron' type
    --acc         compare acceptors using 'intron' type
+
+   --single      using cds_type label in attributes if CDS line
+   --initial     using cds_type label in attributes if CDS line
+   --internal    using cds_type label in attributes if CDS line
+   --terminal    using cds_type label in attributes if CDS line
 
    --no_phase    ignore phase of record in comparision
 

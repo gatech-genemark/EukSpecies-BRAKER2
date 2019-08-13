@@ -24,11 +24,11 @@ open( my $IN, $gff3) or die "error on open file: $gff3\n";
 open( my $OUT, ">", $gtf) or die "error on open file: $gtf\n";
 while(<$IN>)
 {
-	if ( /\tCDS\t/ or /\tstart_codon\t/ or /\tstop_codon\t/ or /\tintron\t/ )
+	if ( /\tCDS\t/ or /\t[Ss]tart_codon\t/ or /\t[Ss]top_codon\t/ or /\t[Ii]ntron\t/ )
 	{
-		my $trans = '';
-
 		chomp;
+
+		my $trans = '';
 
 		if ( /Parent=([^;]+)/ )
 		{
@@ -45,16 +45,29 @@ while(<$IN>)
 			if ( ! exists $trans_to_gene{$label} )
 				{ die "error, Parent is missing for: $label\n";}
 
-			my $line = $_;
-			$line =~ s/\tParent=.*$/\t/;
-			$line =~ s/\tID=.*$/\t/;
+			my @gff = split( '\t' , $_ );
+
+			my $line = '';
+			for( my $i = 0; $i < 8; $i += 1 )
+			{
+				$line .= $gff[$i] ."\t";
+			}
+
+			$line .= "gene_id \"$trans_to_gene{$label}\"\; ";
+			$line .= "transcript_id \"$label\"\;";
+
+			if( $gff[8] =~ /cds_type=(\S+?);/ )
+			{
+				$line .= " cds_type \"$1\"\;";
+			}
+			if( $gff[8] =~ /count=(\S+?);/ )
+			{
+				$line .= " count \"$1\"\;";
+			}
+
+			$line .= "\n";
 
 			print $OUT $line;
-
-			my $attr = "gene_id \"$trans_to_gene{$label}\"\;";
-			$attr .= " transcript_id \"$label\"\;\n";
-
-			print $OUT $attr;
 		}
 	}
 }
