@@ -117,4 +117,8 @@ cd $base/annot/
 soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
 
-
+Create a version of annotation with NCBI contig names
+```
+cd $base/annot/
+for i in {1..7}; do sed -i "s/Supercontig_$i/NC_02650${i}.1/" annot_NC_contigs.gtf; done
+```
