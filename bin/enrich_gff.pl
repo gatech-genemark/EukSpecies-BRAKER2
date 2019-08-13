@@ -170,8 +170,8 @@ sub EnrichRecord
 			AddLabelsToCDS(\@cds);
 			AddCountToAttr(\@cds);
 			AddCountToAttr(\@introns);
-			AddCountToAttr(\@start_codon);
-			AddCountToAttr(\@stop_codon);
+			AddCountToAttrSemiReverse(\@start_codon, 1);
+			AddCountToAttrSemiReverse(\@stop_codon, 0);
 
 			push @new_r, @gene;
 			push @new_r, [ @{$mrna{$key}[0]} ];
@@ -207,6 +207,38 @@ sub AddCountToAttr
 		{
 			$ref->[$i][8] .= ";" if ( $ref->[$i][8] !~ m/;$/ );
 			$ref->[$i][8] .= "count=". ($i+1) ."_". $size .";";
+		}
+	}
+}
+# --------------------------------------------
+sub AddCountToAttrSemiReverse
+{
+	my $ref = shift;
+	my $is_start = shift;
+
+	my $size = scalar @{$ref};
+
+	return if ( $size == 0 );
+
+	if ( $size == 1 )
+	{
+		$ref->[0][8] .= ";" if ( $ref->[0][8] !~ /;$/ );
+		$ref->[0][8] .= "count=1_1;";
+	}
+	elsif ( $size == 2 )
+	{
+		$ref->[0][8] .= ";" if ( $ref->[0][8] !~ /;$/ );
+		$ref->[1][8] .= ";" if ( $ref->[1][8] !~ /;$/ );
+
+		if (( $is_start and ($ref->[0][6] eq "+" )) or ( !$is_start and ($ref->[0][6] eq "-" )))
+		{
+			$ref->[0][8] .= "count=1_2;";
+			$ref->[1][8] .= "count=2_2;";
+		}
+		elsif (( !$is_start and ($ref->[0][6] eq "+" )) or ( $is_start and ($ref->[0][6] eq "-" )))
+		{
+			$ref->[0][8] .= "count=2_2;";
+			$ref->[1][8] .= "count=1_2;";
 		}
 	}
 }
@@ -392,6 +424,8 @@ sub CreateStopCodon
 		}
 	}
 
+	@arr = sort{ $a->[3] <=> $b->[3] } @arr;
+
 	return @arr;
 }
 # --------------------------------------------
@@ -528,6 +562,8 @@ sub CreateStartCodon
 			}
 		}
 	} 
+
+	@arr = sort{ $a->[3] <=> $b->[3] } @arr;
 
 	return @arr;
 }
