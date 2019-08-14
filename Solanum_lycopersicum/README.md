@@ -205,12 +205,14 @@ gunzip GCF_000188115.4_SL3.0_genomic.gff.gz
 gff_to_gff_subset.pl  --swap  --list ../list_ncbi.tbl  --v  --in GCF_000188115.4_SL3.0_genomic.gff  --out refseq.gff
 # check
 /home/tool/gt/bin/gt  gff3validator refseq.gff
-# fix error maualy and check again
-/home/tool/gt/bin/gt  gff3validator refseq.gff
-# reformat
+# fix errors manually and recheck again
+# error type:  "=xyz;1;"  ";1;" is not according to format
+# error type: no ID for Parent
+# I was not able to resolve errors in the GFF file
+# too many errors on next command
 /home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o refseq_all.gff3  refseq.gff
-enrich_gff.pl --in refseq_all.gff3 --out refseq.gff3 --cds 
-gff3_to_gtf.pl refseq.gff3 refseq.gtf
+# use refseq.gff directly
+mv refseq.gff ../../annot/
 
 # move masking coordinates to new seq ID and subset it
 gff_to_gff_subset.pl  --swap  --list ../list_ncbi.tbl  --v  --out $base/annot/ncbi_softmask.gff  --in ncbi_softmask.gff
@@ -242,6 +244,10 @@ gff_to_gff_subset.pl  --swap  --list ../list_itag.tbl  --v  --out $base/annot/it
 
 gzip ITAG3.2_RepeatModeler_repeats_light.gff
 gzip ITAG3.2_REPET_repeats_agressive.gff
+
+cd $base/annot
+ln -s itag.gff3 annot.gff3
+ln -s itag.gtf annot.gtf
 ```
 ### Masking
 ```
