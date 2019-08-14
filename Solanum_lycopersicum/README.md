@@ -200,7 +200,6 @@ cd $base/arx/refseq
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/188/115/GCF_000188115.4_SL3.0/GCF_000188115.4_SL3.0_genomic.gff.gz
 gunzip GCF_000188115.4_SL3.0_genomic.gff.gz
 
-cd $base/refseq
 gff_to_gff_subset.pl  --swap  --list ../list_ncbi.tbl  --v  --in GCF_000188115.4_SL3.0_genomic.gff  --out refseq.gff
 
 # move masking coordinates to new seq ID and subset it
@@ -229,14 +228,6 @@ cd $base/data
 
 # mask genome using RepeatModeler light masking coordinates
 /home/tool/bedtools2/bin/bedtools  maskfasta  -fi genome.fasta  -bed ../annot/itag_RM_softmask.gff  -fo genome_RM.fasta  -soft
-
-```
-### Prepare genome to run
-```
-
-cat itag.gff | grep -P '\tCDS\t' | cut -f1-7 | sort -k1,1 -k4,4n -k5,5n | awk '{print $1,"z",$3,$4,$5,$6,".","0"}' | tr ' ' '\t'| uniq > itag_CDS_LR.gff
-cat refseq.gff | grep -P '\tCDS\t' | cut -f1-7 | sort -k1,1 -k4,4n -k5,5n | awk '{print $1,"z",$3,$4,$5,$6,".","0"}' | tr ' ' '\t'| uniq > refseq_CDS_LR.gff
-
 ```
 ### RnaSeq
 ```
@@ -274,5 +265,3 @@ cd $base/rnaseq/run_star
 /home/tool/STAR/bin/Linux_x86_64/STAR --genomeDir ../stardb/ --runThreadN 16  --readFilesIn $base/arx/SRR7959012_1.fastq,$base/arx/SRR7959019_1.fastq $base/arx/SRR7959012_2.fastq,$base/arx/SRR7959019_2.fastq
 
 ```
-
-
