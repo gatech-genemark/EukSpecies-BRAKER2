@@ -52,9 +52,9 @@ my %allowed =
 	"CDS" => 1,
 	"exon" => 1,
 
-#	"Repeat" => 1,
-#	"similarity" => 1,
-#	"match" => 1,
+	"Repeat" => 1,
+	"similarity" => 1,
+	"match" => 1,
 
 #	"five_prime_UTR" => 1,
 #	"three_prime_UTR" => 1,
