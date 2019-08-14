@@ -22,6 +22,7 @@ Create core folders
 cd $base
 mkdir -p arx annot data mask
 ```
+### Assembly
 Download genomic sequence and reformat it:  
  * simplified FASTA defline with a first word in defline as a unique sequence ID
  * select only nuclear DNA (exclude organelles)
