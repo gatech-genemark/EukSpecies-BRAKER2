@@ -187,9 +187,11 @@ probuild --stat --details --seq ../data/genome.fasta
 # NCBI softmasking to GFF coordinates
 cd $base/arx/refseq
 soft_fasta_to_3 < GCF_000188115.4_SL3.0_genomic.fna | sed 's/ S.*e\t/\t/' | awk '{print $1 "\tNCBI\tRepeat\t" $2+1 "\t" $3 "\t.\t.\t.\trepeat_by_ncbi"  }' > ncbi_softmask.gff
-
-cd $base/arx/refseq
 gzip GCF_000188115.4_SL3.0_genomic.fna
+
+cd $base/arx
+grep '^>' itag/S_lycopersicum_chromosomes.3.00.fa  | cut -b2- |awk '{ printf("%s %s\n", $1, $1 ) }' | sed 's/ SL3.0ch/\tchr_/' | grep -v chr_00 > list_itag.tbl
+
 cd $base/arx/itag
 gzip S_lycopersicum_chromosomes.3.00.fa
 ```
@@ -201,6 +203,14 @@ wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/188/115/GCF_000188115.4_SL3.
 gunzip GCF_000188115.4_SL3.0_genomic.gff.gz
 
 gff_to_gff_subset.pl  --swap  --list ../list_ncbi.tbl  --v  --in GCF_000188115.4_SL3.0_genomic.gff  --out refseq.gff
+# check
+/home/tool/gt/bin/gt  gff3validator refseq.gff
+# fix error maualy and check again
+/home/tool/gt/bin/gt  gff3validator refseq.gff
+# reformat
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o refseq_all.gff3  refseq.gff
+enrich_gff.pl --in refseq_all.gff3 --out refseq.gff3 --cds 
+gff3_to_gtf.pl refseq.gff3 refseq.gtf
 
 # move masking coordinates to new seq ID and subset it
 gff_to_gff_subset.pl  --swap  --list ../list_ncbi.tbl  --v  --out $base/annot/ncbi_softmask.gff  --in ncbi_softmask.gff
@@ -211,6 +221,20 @@ wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_
 wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_RepeatModeler_repeats_light.gff
 
 gff_to_gff_subset.pl  --swap  --list ../list_itag.tbl  --v  --in ITAG3.2_gene_models.gff --out itag.gff
+echo "##gff-version 3" > tmp_itag.gff
+probuild --stat_fasta --seq ../../data/genome.fasta | cut -f1,2 | grep chr_ | tr -d '>' | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_itag.gff
+cat itag.gff | grep -v '##gff-version'  >> tmp_itag.gff
+mv tmp_itag.gff itag.gff
+# check
+/home/tool/gt/bin/gt  gff3validator itag.gff
+# reformat
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o itag_all.gff3  itag.gff
+enrich_gff.pl --in itag_all.gff3 --out itag.gff3 --cds
+gff3_to_gtf.pl itag.gff3 itag.gtf
+rm itag_all.gff3
+
+mv itag.gff3 ../../annot/
+mv itag.gtf ../../annot/
 
 # move masking coordinates to new seq ID and subset it
 gff_to_gff_subset.pl  --swap  --list ../list_itag.tbl  --v  --out $base/annot/itag_RM_softmask.gff  --in  ITAG3.2_RepeatModeler_repeats_light.gff
