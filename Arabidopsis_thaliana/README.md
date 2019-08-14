@@ -22,6 +22,7 @@ Create core folders
 cd $base
 mkdir -p arx annot data mask
 ```
+### Assembly
 Download genomic sequence and reformat it:  
  * simplified FASTA defline with a first word in defline as a unique sequence ID
  * select only nuclear DNA (exclude organelles)
@@ -49,6 +50,7 @@ probuild --stat --details --seq ../data/genome.fasta
 
 gzip  GCF_000001735*.fna
 ```
+### Masking
 Run _de novo_ masking of genome using RepeatModeler.  
 Run this on AWS node configured for RM:  
     ec2-13-59-253-165.us-east-2.compute.amazonaws.com
@@ -74,6 +76,7 @@ scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$s
   ## password
 exit
 ```
+### Annotation
 Download annotation from Tair.  
 NCBI RefSeq is using annotation from Tair.  
 Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  

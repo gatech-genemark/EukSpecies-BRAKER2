@@ -1,45 +1,57 @@
-# Tomato
-_Solanum lycopersicum_
-```
-base=/storage4/alexl/Solanum_lycopersicum
+# Species: _Solanum lycopersicum_ Tomato
+Moving tomato.git to EukSpecies.git  
 
-cd /storage4/alexl
-mkdir Solanum_lycopersicum
-cd Solanum_lycopersicum
-mkdir arx data annot
+Alex Lomsadze  
+Georgia Institute of Technology  
+2019  
+## Project setup
+Project is set in bash shell.  
 
-git clone git@github.gatech.edu:al68/tomato.git
-ln -s $base/tomato/bin  $base/bin
+Setup environment on GT cluster as:  
 ```
-### install tools 
+umask 002
+
+base="/storage3/w/alexl/EukSpecies"
+species="Solanum_lycopersicum"
+
+export PATH="$base/bin:$PATH"
+export base="$base/$species"
+cd $base
+if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
 ```
-cd $base/bin
-# Get from softmasked genome coordinates of lowercase letters in tabular form
-# script from internet https://www.biostars.org/p/134868/
-vi soft_fasta_to_3.l
-flex -o soft_fasta_to_3.yy.c soft_fasta_to_3.l
-gcc -o soft_fasta_to_3  soft_fasta_to_3.yy.c
+Create core folders  
 ```
-### Assembly and anotation
+cd $base
+mkdir -p arx annot data mask
+```
+### Assembly
+Download genomic sequence and reformat it:  
+ * simplified FASTA defline with a first word in defline as a unique sequence ID
+ * select only nuclear DNA (exclude organelles)
+ * set sequence in all uppercase
+
+When possible use genomic sequence from NCBI.  
+Match sequence ID in FASTA file with sequence ID in annotation file.  
+Use ID from annotation.  
+Keep IDs in the file "list.tbl".  
+First column in the table is sequence ID and second column is annotation ID.  
+
+Description of assembly is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000188115.4  
 Genome assembly version: SL3.0  
-NCBI https://www.ncbi.nlm.nih.gov/assembly/GCF_000188115.4  
 * GenBank assembly accession: GCA_000188115.3 (latest)  
 * RefSeq assembly accession: GCF_000188115.4 (latest)  
-GenBank ~ Refseq assembly  
+GenBank = Refseq assembly, excluding organelles  
+RefSeq annotation ia at https://www.ncbi.nlm.nih.gov/genome/annotation_euk/Solanum_lycopersicum/103/  
 Tomato international community project Sol Genomics Network https://solgenomics.net/organism/Solanum_lycopersicum/genome  
 ```
 cd $base/arx
 mkdir genbank refseq itag
 ```
-### GenBank
+### GenBank assembly
 ```
 cd $base/arx/genbank/
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/188/115/GCA_000188115.3_SL3.0/GCA_000188115.3_SL3.0_genomic.fna.gz
 gunzip GCA_000188115.3_SL3.0_genomic.fna.gz
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/188/115/GCA_000188115.3_SL3.0/GCA_000188115.3_SL3.0_genomic.gff.gz
-gunzip GCA_000188115.3_SL3.0_genomic.gff.gz
-
-# Attention, no gene coordinates in Genbank annotation file
 
 cat GCA_000188115.3_SL3.0_genomic.fna | grep '^>' | grep -v AEKE
 
@@ -75,18 +87,16 @@ NT_n           0
 SEQUENCE_other 0
 GC             34.1
 RECORDS        3148
-```
-### RefSeq 103
-```
-https://www.ncbi.nlm.nih.gov/genome/annotation_euk/Solanum_lycopersicum/103/
 
+gzip GCA_000188115.3_SL3.0_genomic.fna
+```
+### RefSeq 103 assembly
+```
 cd $base/arx/refseq/
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/188/115/GCF_000188115.4_SL3.0/GCF_000188115.4_SL3.0_genomic.fna.gz
 gunzip GCF_000188115.4_SL3.0_genomic.fna.gz
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/188/115/GCF_000188115.4_SL3.0/GCF_000188115.4_SL3.0_genomic.gff.gz
-gunzip GCF_000188115.4_SL3.0_genomic.gff.gz
 
-grep '^>' GCF_000188115.4_SL3.0_genomic.fna | grep -v '^>NW_'
+grep '^>' GCF_000188115.4
 >NC_015438.3 Solanum lycopersicum cultivar Heinz 1706 chromosome 1, SL3.0, whole genome shotgun sequence
 >NC_015439.3 Solanum lycopersicum cultivar Heinz 1706 chromosome 2, SL3.0, whole genome shotgun sequence
 >NC_015440.3 Solanum lycopersicum cultivar Heinz 1706 chromosome 3, SL3.0, whole genome shotgun sequence
@@ -121,13 +131,10 @@ SEQUENCE_other 0
 GC             34.1
 RECORDS        3150
 ```
-### ITAG 3.20
+### ITAG 3.20 assembly
 ```
 cd $base/arx/itag/
-wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_gene_models.gff
 wget ftp://ftp.solgenomics.net/tomato_genome/assembly/build_3.00/S_lycopersicum_chromosomes.3.00.fa
-wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_REPET_repeats_agressive.gff
-wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_RepeatModeler_repeats_light.gff
 
 grep '^>' S_lycopersicum_chromosomes.3.00.fa
 >SL3.0ch00
@@ -162,56 +169,89 @@ NT_n           0
 SEQUENCE_other 0
 GC             34.1
 RECORDS        13
-
 ```
-### Prepare genome to run
+### Format genomic sequence for project  
+Using NCBI RefSeq genome sequence  
+Rename chromosome names in ITAG style as: chr_01 .. chr_12.  
 ```
-cd $base/annot
-mkdir genome_and_repeats
-cd $base/annot/genome_and_repeats
+cd $base/arx
+ln -s refseq/GCF_000188115.4_SL3.0_genomic.fna
+grep '^>' GCF*.fna  | grep -v '^>NW_' | grep -v NC_035963 | grep -v NC_007898 | cut -f1,8 -d' ' | sed 's/^>//'  | awk '{ printf("%s chr_%02d\n", $1, $2) }' > list_ncbi.tbl
 
-# mask genome using REPET aggressive masking coordinates
-/home/tool/bedtools2/bin/bedtools maskfasta -fi $base/arx/itag/S_lycopersicum_chromosomes.3.00.fa -bed  $base/arx/itag/ITAG3.2_REPET_repeats_agressive.gff  -fo genome_REPET_all.fasta  -soft
-
-# mask genome using RepeatModeler light masking coordinates
-/home/tool/bedtools2/bin/bedtools maskfasta -fi $base/arx/itag/S_lycopersicum_chromosomes.3.00.fa -bed  $base/arx/itag/ITAG3.2_RepeatModeler_repeats_light.gff  -fo genome_RM_all.fasta  -soft
+get_fasta_with_tag.pl --swap --in GCF_000188115.4_SL3.0_genomic.fna  --out genome.fasta  --list list_ncbi.tbl --v
+probuild --stat --details --seq genome.fasta
+probuild --reformat_fasta --in genome.fasta --out ../data/genome.fasta --uppercase 1 --letters_per_line 60 --original
+rm genome.fasta
+probuild --stat --details --seq ../data/genome.fasta
 
 # NCBI softmasking to GFF coordinates
-$base/bin/soft_fasta_to_3 < $base/arx/refseq/GCF_000188115.4_SL3.0_genomic.fna > ncbi_soft_mask.3
-cat ncbi_soft_mask.3  |  sed 's/ S.*e\t/\t/'  | awk '{print $1 "\tNCBI\tRepeat\t" $2+1 "\t" $3 "\t.\t.\t.\trepeat_by_ncbi"  }' > ncbi_soft_mask_all.gff
-rm ncbi_soft_mask.3
+cd $base/arx/refseq
+soft_fasta_to_3 < GCF_000188115.4_SL3.0_genomic.fna | sed 's/ S.*e\t/\t/' | awk '{print $1 "\tNCBI\tRepeat\t" $2+1 "\t" $3 "\t.\t.\t.\trepeat_by_ncbi"  }' > ncbi_softmask.gff
+gzip GCF_000188115.4_SL3.0_genomic.fna
 
-# exclude unplaced, MT and PLST contigs/chromosomes
-# rename chromosome names as: chr_01 .. chr_12
-# manually create list of chromosomes with: old_name new_name
+cd $base/arx
+grep '^>' itag/S_lycopersicum_chromosomes.3.00.fa  | cut -b2- |awk '{ printf("%s %s\n", $1, $1 ) }' | sed 's/ SL3.0ch/\tchr_/' | grep -v chr_00 > list_itag.tbl
 
-cat  list_ncbi.tbl
-cat  list_itag.tbl
+cd $base/arx/itag
+gzip S_lycopersicum_chromosomes.3.00.fa
+```
+### Annotation
+GenBank GFF3 annotation file was empty. Thus, parsing only NCBI RefSeq and ITAG annoatations.
+```
+cd $base/arx/refseq
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/188/115/GCF_000188115.4_SL3.0/GCF_000188115.4_SL3.0_genomic.gff.gz
+gunzip GCF_000188115.4_SL3.0_genomic.gff.gz
 
-$base/bin/gff_to_gff_subset.pl  -in ncbi_soft_mask_all.gff                                  --out ncbi_soft_mask.gff       --list list_ncbi.tbl -v
-$base/bin/gff_to_gff_subset.pl  -in $base/arx/itag/ITAG3.2_RepeatModeler_repeats_light.gff  --out itag_rm_soft_mask.gff    --list list_itag.tbl -v
-$base/bin/gff_to_gff_subset.pl  -in $base/arx/itag/ITAG3.2_REPET_repeats_agressive.gff      --out itag_aggr_soft_mask.gff  --list list_itag.tbl -v
+gff_to_gff_subset.pl  --swap  --list ../list_ncbi.tbl  --v  --in GCF_000188115.4_SL3.0_genomic.gff  --out refseq.gff
+# check
+/home/tool/gt/bin/gt  gff3validator refseq.gff
+# fix error maualy and check again
+/home/tool/gt/bin/gt  gff3validator refseq.gff
+# reformat
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o refseq_all.gff3  refseq.gff
+enrich_gff.pl --in refseq_all.gff3 --out refseq.gff3 --cds 
+gff3_to_gtf.pl refseq.gff3 refseq.gtf
 
-$base/bin/get_fasta_with_tag.pl --swap --in genome_REPET_all.fasta --out genome_REPET.fasta --list list_itag.tbl --v
-$base/bin/get_fasta_with_tag.pl --swap --in genome_RM_all.fasta    --out genome_RM.fasta    --list list_itag.tbl --v
-$base/bin/get_fasta_with_tag.pl --swap --in $base/arx/refseq/GCF_000188115.4_SL3.0_genomic.fna  --out genome_NCBI.fasta  --list list_ncbi.tbl --v
+# move masking coordinates to new seq ID and subset it
+gff_to_gff_subset.pl  --swap  --list ../list_ncbi.tbl  --v  --out $base/annot/ncbi_softmask.gff  --in ncbi_softmask.gff
 
-probuild --stat --seq genome_NCBI.fasta --details
-probuild --stat --seq genome_RM.fasta --details
-probuild --stat --seq genome_REPET.fasta --details
+cd $base/arx/itag
+wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_gene_models.gff
+wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_REPET_repeats_agressive.gff
+wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG3.2_release/ITAG3.2_RepeatModeler_repeats_light.gff
 
-mv genome_REPET.fasta $base/data
-mv genome_RM.fasta $base/data
-mv genome_NCBI.fasta $base/data
+gff_to_gff_subset.pl  --swap  --list ../list_itag.tbl  --v  --in ITAG3.2_gene_models.gff --out itag.gff
+echo "##gff-version 3" > tmp_itag.gff
+probuild --stat_fasta --seq ../../data/genome.fasta | cut -f1,2 | grep chr_ | tr -d '>' | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_itag.gff
+cat itag.gff | grep -v '##gff-version'  >> tmp_itag.gff
+mv tmp_itag.gff itag.gff
+# check
+/home/tool/gt/bin/gt  gff3validator itag.gff
+# reformat
+/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o itag_all.gff3  itag.gff
+enrich_gff.pl --in itag_all.gff3 --out itag.gff3 --cds
+gff3_to_gtf.pl itag.gff3 itag.gtf
+rm itag_all.gff3
 
-cd $base/annot
-$base/bin/gff_to_gff_subset.pl  --in ../arx/refseq/GCF_000188115.4_SL3.0_genomic.gff   --out refseq.gff   --list genome_and_repeats/list_ncbi.tbl  --v
-$base/bin/gff_to_gff_subset.pl  --in ../arx/genbank/GCA_000188115.3_SL3.0_genomic.gff  --out genbank.gff  --list genome_and_repeats/list_genbank.tbl  --v
-$base/bin/gff_to_gff_subset.pl  --in ../arx/itag/ITAG3.2_gene_models.gff               --out itag.gff     --list genome_and_repeats/list_itag.tbl  --v
+mv itag.gff3 ../../annot/
+mv itag.gtf ../../annot/
 
-cat itag.gff | grep -P '\tCDS\t' | cut -f1-7 | sort -k1,1 -k4,4n -k5,5n | awk '{print $1,"z",$3,$4,$5,$6,".","0"}' | tr ' ' '\t'| uniq > itag_CDS_LR.gff
-cat refseq.gff | grep -P '\tCDS\t' | cut -f1-7 | sort -k1,1 -k4,4n -k5,5n | awk '{print $1,"z",$3,$4,$5,$6,".","0"}' | tr ' ' '\t'| uniq > refseq_CDS_LR.gff
+# move masking coordinates to new seq ID and subset it
+gff_to_gff_subset.pl  --swap  --list ../list_itag.tbl  --v  --out $base/annot/itag_RM_softmask.gff  --in  ITAG3.2_RepeatModeler_repeats_light.gff
+gff_to_gff_subset.pl  --swap  --list ../list_itag.tbl  --v  --out $base/annot/itag_REPET_softmask.gff  --in ITAG3.2_REPET_repeats_agressive.gff
 
+gzip ITAG3.2_RepeatModeler_repeats_light.gff
+gzip ITAG3.2_REPET_repeats_agressive.gff
+```
+### Masking
+```
+cd $base/data
+
+# mask genome using REPET aggressive masking coordinates
+/home/tool/bedtools2/bin/bedtools  maskfasta  -fi genome.fasta  -bed ../annot/itag_REPET_softmask.gff  -fo genome_REPET.fasta  -soft
+
+# mask genome using RepeatModeler light masking coordinates
+/home/tool/bedtools2/bin/bedtools  maskfasta  -fi genome.fasta  -bed ../annot/itag_RM_softmask.gff  -fo genome_RM.fasta  -soft
 ```
 ### RnaSeq
 ```
@@ -249,5 +289,3 @@ cd $base/rnaseq/run_star
 /home/tool/STAR/bin/Linux_x86_64/STAR --genomeDir ../stardb/ --runThreadN 16  --readFilesIn $base/arx/SRR7959012_1.fastq,$base/arx/SRR7959019_1.fastq $base/arx/SRR7959012_2.fastq,$base/arx/SRR7959019_2.fastq
 
 ```
-
-
