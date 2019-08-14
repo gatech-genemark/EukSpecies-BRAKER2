@@ -48,6 +48,7 @@ my $compare_starts = 0;
 my $compare_stops = 0;
 my $compare_genes = 0;
 my $compare_transcripts = 0;
+my $compare_multi = 0;
 
 my $no_phase = '';
 
@@ -709,6 +710,8 @@ sub ParseGFF
 				{ ; }
 			elsif ( $compare_terminal and ( $attr =~ /(cds_type=[Tt]erminal|cds_type \"[Tt]erminal\")/ ))
 				{ ; }
+			elsif ( $compare_multi and ( $type eq "CDS") and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
+				{ ; }
 			else
 				{ next; }
 
@@ -850,6 +853,7 @@ sub ParseCMD
 		'initial'    => \$compare_initial,
 		'internal'   => \$compare_internal,
 		'terminal'   => \$compare_terminal,
+		'multi'      => \$compare_multi,
 	);
 
 	die "error on command line\n" if( !$opt_results );
@@ -866,6 +870,7 @@ sub ParseCMD
 	$count += 1 if $compare_initial;
 	$count += 1 if $compare_internal;
 	$count += 1 if $compare_terminal;
+	$count += 1 if $compare_multi;
 
 	if ($count == 0 )
 	{
@@ -916,6 +921,7 @@ Default comparision is done for 'CDS' type
    --initial     using cds_type label in attributes if CDS line
    --internal    using cds_type label in attributes if CDS line
    --terminal    using cds_type label in attributes if CDS line
+   --multi       compare not-single
 
    --no_phase    ignore phase of record in comparision
 
