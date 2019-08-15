@@ -51,6 +51,8 @@ my %allowed =
 	"mRNA" => 1,
 	"CDS" => 1,
 	"exon" => 1,
+	"start_codon" => 1,
+	"stop_codon" => 1,
 
 	"Repeat" => 1,
 	"similarity" => 1,
