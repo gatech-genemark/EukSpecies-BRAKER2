@@ -85,7 +85,7 @@ sub LoadIds
 	{
 		if ( /^#/ ) {next;}
 
-		if ( /\tmRNA\t/ )
+		if ( /\tmRNA\t/ or /\t\S_gene_segment\t/ )
 		{
 #			if ($v) { print $_; }
 

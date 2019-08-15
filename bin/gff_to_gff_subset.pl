@@ -84,6 +84,14 @@ my %allowed =
 	"rRNA" => 1,
 	"pre_miRNA" => 1,
 	"miRNA" => 1,
+
+	"ncRNA_gene" => 1,
+	"unconfirmed_transcript" => 1,
+	"C_gene_segment" => 1,
+	"D_gene_segment" => 1,
+	"J_gene_segment" => 1,
+	"V_gene_segment" => 1,
+
 );
 
 my %found;
