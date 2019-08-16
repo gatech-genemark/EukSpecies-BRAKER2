@@ -6,14 +6,9 @@
 #
 # This script compares intervals from GFF/GTF/GFF3 files and
 # generates report suitable for drawing Venn diagram.
-# Supported interval types:
-# 	 "CDS"
-# 	 "intron"
-# 	 "star_codon"
-# 	 "stop_codon"
 # Comparison can be done between 2 or 3 files.
 #
-# Optional parameters can be used to account for pseudogenes and repeat regions
+# Optional parameters can be used to account for pseudogenes and repeat regions.
 # ==============================================================
 
 use strict;
@@ -22,7 +17,7 @@ use warnings;
 use Getopt::Long qw( GetOptions );
 use Data::Dumper;
 
-my $VERSION = "v2_2019";
+my $VERSION = "v3_2019";
 
 # ------------------------------------------------
 my $v = '';
@@ -50,6 +45,9 @@ my $compare_genes = 0;
 my $compare_transcripts = 0;
 my $compare_multi = 0;
 
+my $compare_gene = 0;
+my $compare_trans = 0;
+
 my $no_phase = '';
 
 my $out_file = '';
@@ -74,6 +72,10 @@ my %h1;
 my %h2;
 my %h3;
 
+my %tr2gene1 = ();
+my %tr2gene2 = ();
+my %tr2gene3 = ();
+
 my %shared_12;
 my %shared_13;
 my %shared_23;
@@ -84,12 +86,67 @@ my %unique_1;
 my %unique_2;
 my %unique_3;
 
-ParseGFF( $f1, \%h1 );
-ParseGFF( $f2, \%h2 );
-ParseGFF( $f3, \%h3 ) if $f3;
+ParseGFF( $f1, \%h1, \%tr2gene1 );
+ParseGFF( $f2, \%h2, \%tr2gene2 );
+ParseGFF( $f3, \%h3, \%tr2gene3 ) if $f3;
 
-FilterPseudo( $pseudo ) if $pseudo;
-FilterMasked( $masked, $min_masked ) if $masked;
+my %z1;
+my %z2;
+my %z3;
+
+if ( $compare_trans or $compare_gene )
+{
+	%h1 = ReverseKeyValue(\%h1);
+	%h2 = ReverseKeyValue(\%h2);
+	%h3 = ReverseKeyValue(\%h3) if $f3;
+
+	if ($v)
+	{
+		print "# after reducing redundancy:\n";
+		print "# Transcripts-CDS in file $f1: ". (scalar keys %h1) ."\n";
+		print "# Transcripts-CDS in file $f2: ". (scalar keys %h2) ."\n";
+		print "# Transcripts-CDS in file $f3: ". (scalar keys %h3) ."\n" if $f3;
+	}
+
+	if ( $compare_gene )
+	{
+		ReplaceValue( \%h1, \%tr2gene1 );
+		ReplaceValue( \%h2, \%tr2gene2 );
+		ReplaceValue( \%h3, \%tr2gene3 ) if $f3;
+
+		if ($f3)
+			{ die "sorry, 3-way gene level comparision is not implemented yet\n"; } 
+
+		my %z2_found_in_z1;
+
+		foreach my $key (keys %h1)
+		{
+			$z1{ $h1{$key} } += 1;
+
+			if ( exists $h2{$key} )
+			{
+				$z2{ $h1{$key} } += 1;
+				$z2_found_in_z1{ $h2{$key} } += 1;
+			}
+		}
+
+		foreach my $key (keys %h2)
+		{
+			if ( ! exists $z2_found_in_z1{ $h2{$key} } )
+			{
+				$z2{ $h2{$key} } += 1
+			}
+		}
+
+		%h1 = %z1;
+		%h2 = %z2;
+	}
+}
+else
+{
+	FilterPseudo( $pseudo ) if $pseudo;
+	FilterMasked( $masked, $min_masked ) if $masked;
+}
 
 if( !$f3 )
 {
@@ -103,6 +160,31 @@ else
 exit 0;
 
 # ================= subs =========================
+sub ReplaceValue
+{
+	my $ref = shift;
+	my $new_v = shift;
+
+	foreach my $key ( keys %{$ref} )
+	{
+		my $trans_id = '';
+
+		if( $ref->{$key} =~ /^(\S+)\s/ )
+		{
+			$trans_id = $1;
+		}
+		else
+			{ die "error, unexpected format for key: $key\n"; }
+
+		if ( exists $ref->{$key} )
+		{
+			$ref->{$key} = $new_v->{$trans_id};
+		}
+		else
+			{ die "error, gene id is missing for transcript id: $trans_id\n"; }
+	}
+}
+# ------------------------------------------------
 sub FilterMasked
 {
 	my $ name = shift;
@@ -384,6 +466,8 @@ sub Compare3
 		print "#in\tmatch\tunique\t\%\tInitial-CDS\n" if $compare_initial;
 		print "#in\tmatch\tunique\t\%\tInternal-CDS\n" if $compare_internal;
 		print "#in\tmatch\tunique\t\%\tTerminal-CDS\n" if $compare_terminal;
+		print "#in\tmatch\tunique\t\%\tTranscript-CDS\n" if $compare_trans;
+		print "#in\tmatch\tunique\t\%\tGene-CDS\n" if $compare_gene;
 	}
 
 	print "\n";
@@ -515,6 +599,8 @@ sub Compare2
 		print "#in\tmatch\tunique\t\%\tInitial-CDS\n" if $compare_initial;
 		print "#in\tmatch\tunique\t\%\tInternal-CDS\n" if $compare_internal;
 		print "#in\tmatch\tunique\t\%\tTerminal-CDS\n" if $compare_terminal;
+		print "#in\tmatch\tunique\t\%\tTranscript-CDS\n" if $compare_trans;
+		print "#in\tmatch\tunique\t\%\tGene-CDS\n" if $compare_gene;
 	}
 
 	print "\n";
@@ -667,7 +753,7 @@ sub LoadIntervals
 # ------------------------------------------------
 sub ParseGFF
 {
-	my ($name, $ref) = @_;
+	my ($name, $ref, $tr2g) = @_;
 
 	open( my $IN, $name ) or die "error on open file $name: $!\n";
 	while( my $line = <$IN> )
@@ -712,6 +798,10 @@ sub ParseGFF
 				{ ; }
 			elsif ( $compare_multi and ( $type eq "CDS") and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
 				{ ; }
+			elsif ( $compare_trans and ( $type eq "CDS") )
+				{ ; }
+			elsif ( $compare_gene and ( $type eq "CDS") )
+				{ ; }
 			else
 				{ next; }
 
@@ -751,18 +841,44 @@ sub ParseGFF
 				$key .= "_". $ph;
 			}
 
-			if ( ! $original )
+			# Only GTF format for now
+
+			if ( $compare_trans or $compare_gene )
 			{
-				$ref->{$key} += 1;
+				my $gene_id = '';
+				my $trans_id = '';
+
+				if ( $line =~ /\sgene_id \"(\S+)\"\;/ )
+				{
+					$gene_id = $1;
+				}
+
+				if ( $line =~ /\stranscript_id \"(\S+)\"\;/ )
+				{
+					$trans_id = $1;
+				}
+
+				if ( !$gene_id or !$trans_id )
+					{ die "error, GTF formatted file with gene and transcript ID is expected: $line\n"; }
+
+				$ref->{$trans_id} .= ($key ." ");
+				$tr2g->{$trans_id} = $gene_id;
 			}
 			else
 			{
-				if ( exists $ref->{$key} and $v )
+				if ( ! $original )
 				{
-					print "warning, more than one record with the same key was detected: $line";
+					$ref->{$key} += 1;
 				}
+				else
+				{
+					if ( exists $ref->{$key} and $v )
+					{
+						print "warning, more than one record with the same key was detected: $line";
+					}
 
-				$ref->{$key} .= $line;
+					$ref->{$key} .= $line;
+				}
 			}
 		}
 		else
@@ -784,9 +900,23 @@ sub ParseGFF
 		print "# Initial-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_initial;
 		print "# Internal-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_internal;
 		print "# Terminal-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_terminal;
+		print "# Transcripts-CDS in file $name: ". (scalar keys %$ref) ."\n" if ( $compare_trans or $compare_gene );
 	}
 	
 #	print Dumper($ref) if $debug;
+}
+# ------------------------------------------------
+sub ReverseKeyValue
+{
+        my $ref = shift;
+        my %h;
+
+        foreach my $key (keys %{$ref})
+        {
+                $h{ $ref->{$key} } .= ($key ." ");
+        }
+
+        return %h;
 }
 # ------------------------------------------------
 sub CheckBeforeRun
@@ -854,6 +984,8 @@ sub ParseCMD
 		'internal'   => \$compare_internal,
 		'terminal'   => \$compare_terminal,
 		'multi'      => \$compare_multi,
+		'gene'       => \$compare_gene,
+		'trans'      => \$compare_trans,
 	);
 
 	die "error on command line\n" if( !$opt_results );
@@ -871,6 +1003,8 @@ sub ParseCMD
 	$count += 1 if $compare_internal;
 	$count += 1 if $compare_terminal;
 	$count += 1 if $compare_multi;
+	$count += 1 if $compare_gene;
+	$count += 1 if $compare_trans;
 
 	if ($count == 0 )
 	{
@@ -922,6 +1056,10 @@ Default comparision is done for 'CDS' type
    --internal    using cds_type label in attributes if CDS line
    --terminal    using cds_type label in attributes if CDS line
    --multi       compare not-single
+
+   --trans       compare transcipt
+   --gene        compare full gene strcuture:
+                 at least one transcript was mached exactly
 
    --no_phase    ignore phase of record in comparision
 
