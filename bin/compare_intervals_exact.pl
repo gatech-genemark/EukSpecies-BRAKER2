@@ -44,6 +44,8 @@ my $compare_stops = 0;
 my $compare_genes = 0;
 my $compare_transcripts = 0;
 my $compare_multi = 0;
+my $compare_multiGene = 0;
+my $compare_singleGene = 0;
 
 my $compare_gene = 0;
 my $compare_trans = 0;
@@ -94,7 +96,7 @@ my %z1;
 my %z2;
 my %z3;
 
-if ( $compare_trans or $compare_gene )
+if ( $compare_trans or $compare_gene or $compare_multiGene or $compare_singleGene)
 {
 	%h1 = ReverseKeyValue(\%h1);
 	%h2 = ReverseKeyValue(\%h2);
@@ -108,7 +110,7 @@ if ( $compare_trans or $compare_gene )
 		print "# Transcripts-CDS in file $f3: ". (scalar keys %h3) ."\n" if $f3;
 	}
 
-	if ( $compare_gene )
+	if ( $compare_gene or $compare_multiGene or $compare_singleGene)
 	{
 		ReplaceValue( \%h1, \%tr2gene1 );
 		ReplaceValue( \%h2, \%tr2gene2 );
@@ -802,6 +804,10 @@ sub ParseGFF
 				{ ; }
 			elsif ( $compare_gene and ( $type eq "CDS") )
 				{ ; }
+			elsif ( $compare_multiGene and ( $type eq "CDS") and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
+				{ ; }
+			elsif ( $compare_singleGene and ( $type eq "CDS") and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
+				{ ; }
 			else
 				{ next; }
 
@@ -843,7 +849,7 @@ sub ParseGFF
 
 			# Only GTF format for now
 
-			if ( $compare_trans or $compare_gene )
+			if ( $compare_trans or $compare_gene or $compare_multiGene or $compare_singleGene )
 			{
 				my $gene_id = '';
 				my $trans_id = '';
@@ -985,6 +991,8 @@ sub ParseCMD
 		'terminal'   => \$compare_terminal,
 		'multi'      => \$compare_multi,
 		'gene'       => \$compare_gene,
+		'multiGene'  => \$compare_multiGene,
+		'singleGene' => \$compare_singleGene,
 		'trans'      => \$compare_trans,
 	);
 
@@ -1004,6 +1012,8 @@ sub ParseCMD
 	$count += 1 if $compare_terminal;
 	$count += 1 if $compare_multi;
 	$count += 1 if $compare_gene;
+	$count += 1 if $compare_multiGene;
+	$count += 1 if $compare_singleGene;
 	$count += 1 if $compare_trans;
 
 	if ($count == 0 )
@@ -1060,6 +1070,9 @@ Default comparision is done for 'CDS' type
    --trans       compare transcipt
    --gene        compare full gene strcuture:
                  at least one transcript was mached exactly
+
+   --multigene    Compare multi-exon genes
+   --singlegene   Compare single-exon genes
 
    --no_phase    ignore phase of record in comparision
 
