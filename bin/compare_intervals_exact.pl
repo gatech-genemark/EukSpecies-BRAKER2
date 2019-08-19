@@ -790,13 +790,13 @@ sub ParseGFF
 				{ ; }
 			elsif ( $compare_acceptors and ( $type =~ /^[Ii]ntron/) )
 				{ ; }
-			elsif ( $compare_single and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
+			elsif ( $compare_single and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
 				{ ; }
-			elsif ( $compare_initial and ( $attr =~ /(cds_type=[Ii]nitial|cds_type \"[Ii]nitial\")/ ))
+			elsif ( $compare_initial and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ii]nitial|cds_type \"[Ii]nitial\")/ ))
 				{ ; }
-			elsif ( $compare_internal and ( $attr =~ /(cds_type=[Ii]nternal|cds_type \"[Ii]nternal\")/ ))
+			elsif ( $compare_internal and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ii]nternal|cds_type \"[Ii]nternal\")/ ))
 				{ ; }
-			elsif ( $compare_terminal and ( $attr =~ /(cds_type=[Tt]erminal|cds_type \"[Tt]erminal\")/ ))
+			elsif ( $compare_terminal and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Tt]erminal|cds_type \"[Tt]erminal\")/ ))
 				{ ; }
 			elsif ( $compare_multi and ( $type eq "CDS") and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
 				{ ; }
