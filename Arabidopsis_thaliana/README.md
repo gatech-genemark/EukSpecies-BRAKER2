@@ -3,38 +3,23 @@ Alex Lomsadze
 Georgia Institute of Technology  
 2019  
 ## Project setup  
-Project is set in bash shell.  
-
-Setup environment on GT cluster as:  
 ```
-umask 002
-
-base="/storage3/w/alexl/EukSpecies"
 species="Arabidopsis_thaliana"
-
+base="/storage3/w/alexl/EukSpecies"
 export PATH="$base/bin:$PATH"
 export base="$base/$species"
 cd $base
 if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
+umask 002
 ```
 Create core folders  
 ```
 cd $base
-mkdir -p arx annot data mask
+mkdir -p arx annot data
 ```
 ### Genome sequence  
-Download genomic sequence and reformat it:  
- * simplified FASTA defline with a first word in defline as a unique sequence ID  
- * select only nuclear DNA (exclude organelles)  
- * set sequence in all uppercase  
-
-When possible use genomic sequence from NCBI.  
-Match sequence ID in FASTA file with sequence ID in annotation file.  
-Use ID from annotation.  
-Keep IDs in the file "list*.tbl".  
-First column in the "list.tbl" table is sequence ID and second column is annotation ID.  
-
-Description of assembly is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4  
+Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4  
+GenBank, RefSeq and TAIR nuclear DNA sequences are identical.  
 ```
 # download data
 cd $base/arx
@@ -45,15 +30,19 @@ gunzip  GCF_000001735*.fna.gz
 grep '^>' GCF*.fna > deflines
 cat deflines | grep -v NC_000932 | grep -v NC_037304 | cut -f1,5 -d' ' | sed 's/^>//'  | sed 's/ / Chr/' > list.tbl
 
-# select and format sequence
-get_fasta_with_tag.pl --swap --in GCF_000001735.4_TAIR10.1_genomic.fna  --out genome.fasta  --list list.tbl --v
-probuild --reformat_fasta --in genome.fasta --out ../data/genome.fasta --uppercase 1 --letters_per_line 60 --original
+# select and reformat sequence
+get_fasta_with_tag.pl --swap --in GCF_000001735.4_TAIR10.1_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
+probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
 # check sequence and clean folder
+probuild --stat --details --seq tmp_genome.fasta
 probuild --stat --details --seq genome.fasta
-probuild --stat --details --seq ../data/genome.fasta
 
-rm defline genome.fasta
+# put in work folder
+mv genome.fasta ../data/genome.fasta
+
+# clean tmp files
+rm defline tmp_genome.fasta
 gzip  GCF_000001735*.fna
 ```
 ### Masking  
