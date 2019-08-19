@@ -12,6 +12,9 @@ cd EukSpecies
 cd bin
 # follow installation instructions in "bin" README file
 ```
+### Setup
+Project is set in bash shell.  
+Setup environment variables before each work session.  
 ### Genome sequence
 Download genomic sequence and reformat it:  
  * Input sequence should be in FASTA format.
