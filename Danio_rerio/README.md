@@ -1,5 +1,5 @@
 # Species: _Danio_rerio_
-Alex Lomsadze  
+Alex Lomsadze, Tomas Bruna  
 Georgia Institute of Technology  
 2019  
 ## Project setup
@@ -88,6 +88,8 @@ soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\t
 
 ### Dealing with incomplete CDS
 
+Identification of the problem
+
 ```
 cd $base/arx/ensembl
 wget wget ftp://ftp.ensembl.org/pub/release-97/gtf/danio_rerio/Danio_rerio.GRCz11.97.gtf.gz
@@ -103,4 +105,19 @@ grep  -Ff incomplete_stops /storage_backup/prothint/Danio_rerio/annot/extra_stop
 
 # However, some extra starts/stops are still unaccounted for:
 grep -v -Ff incomplete_starts /storage_backup/prothint/Danio_rerio/annot/extra_starts
+```
+
+
+* The following script:
+    * Flags partial CDS
+    * Removes extra start and stops in the enriched annotation
+    * Splits the annotation into files with:
+        * Complete/incomplete transcripts
+        * Complete/incomplete genes. Gene is considered to be incomplete if at least one of its transcripts is incomplete.
+
+Assumes that annot.gtf is the enriched version of annotation with **incorrect starts and stops being part of partial CDS segments**.
+
+```
+cd $base/annot
+flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf --completeTranscriptsOutput completeTranscripts.gtf --fullOutput annot_fixed_partial.gtf --completeGenesOutput completeGenes.gtf --incompleteGenesOutput incompleteGenes.gtf
 ```
