@@ -45,7 +45,7 @@ mv genome.fasta ../data/genome.fasta
 rm defline tmp_genome.fasta
 gzip  GCF_000001735*.fna
 ```
-### Masking  
+### Masking: _de novo_ and _species specific_
 Run _de novo_ masking of genome using RepeatModeler.  
 Run this on AWS node configured for RM:  
     ec2-13-59-253-165.us-east-2.compute.amazonaws.com  
@@ -54,7 +54,6 @@ ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 # set the environment
 umask 002
 species="Arabidopsis_thaliana"
-
 cd /data
 mkdir -p $species
 cd $species
@@ -62,7 +61,7 @@ mkdir -p data RModeler RMasker
 cd data
 scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data/genome.fasta  .
   ## password
-cd ..
+cd /data/$species/
 cp ../bin/run_masking.sh .
 nohup ./run_masking.sh >&  loginfo &
 # wait and check
@@ -72,8 +71,7 @@ scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$s
 exit
 ```
 ### Annotation  
-Download annotation from Tair.  
-NCBI RefSeq is using annotation from Tair.  
+Download annotation from TAIR. NCBI RefSeq is using annotation from TAIR.  
 Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
 ```
 # download
@@ -82,7 +80,7 @@ wget https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/A
 gunzip  Araport11_GFF3_genes_transposons.201606.gff.gz
 
 # select 
-gff_to_gff_subset.pl  --in Araport11_GFF3_genes_transposons.201606.gff  --out annot.gff3 --list list.tbl --col 2
+gff_to_gff_subset.pl --in Araport11_GFF3_genes_transposons.201606.gff --out annot.gff3 --list list.tbl --col 2
 
 # reformat into "nice" gff3
 echo "##gff-version 3" > tmp_annot.gff3
@@ -96,7 +94,6 @@ mv tmp_annot.gff3  annot.gff3
 
 enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds 
 gff3_to_gtf.pl ref.gff3 ref.gtf
-ln -s ref.gtf annot.gtf
 
 # check
 compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
