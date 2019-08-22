@@ -2,11 +2,11 @@
 # ==============================================================
 # Alex Lomsadze, Tomas Bruna
 # Georgia Institute of Technology, Atlanta, Georgia, US
-# update 2019 
-#
-# This script compares intervals from GFF/GTF/GFF3 files and
+# Last update 2019
+# 
+# This script compares intervals from GFF/GTF/GFF3 like files and
 # generates report suitable for drawing Venn diagram.
-# Comparison can be done between 2 or 3 files.
+# Comparison can be done between 2 or 3 annotations.
 #
 # Optional parameters can be used to account for pseudogenes and repeat regions.
 # ==============================================================
@@ -15,9 +15,10 @@ use strict;
 use warnings;
 
 use Getopt::Long qw( GetOptions );
+use Storable qw(dclone);
 use Data::Dumper;
 
-my $VERSION = "v3_2019";
+my $VERSION = "v4_2019";
 
 # ------------------------------------------------
 my $v = '';
@@ -70,13 +71,72 @@ Usage() if ( @ARGV < 1 );
 ParseCMD();
 CheckBeforeRun();
 
+# hashes "%h*" have a unique keys formed from interval coordinates
+# for example, GFF fields 1,4,5,7 and 8 are joined together with underscores: seqid_start_end_strand_phase
+# all intervals with this exact key are counted as identical
+
 my %h1;
 my %h2;
 my %h3;
 
+# this is used only for gene level accuracy
+# transcript id - to - gene id hash
+
 my %tr2gene1 = ();
 my %tr2gene2 = ();
 my %tr2gene3 = ();
+
+# parse GFF files with annotation
+
+ParseGFF( $f1, \%h1, \%tr2gene1 );
+ParseGFF( $f2, \%h2, \%tr2gene2 );
+ParseGFF( $f3, \%h3, \%tr2gene3 ) if $f3; 
+
+# remove intervals from the sets if they overllap with pseudo or mask
+# rules of removal differ for pseudo and mask
+
+FilterPseudo( $pseudo ) if $pseudo;
+FilterMasked( $masked, $min_masked ) if $masked;
+
+# gene level comparision logic is different from all the other intervals
+
+if ( $compare_gene or $compare_multiGene or $compare_singleGene)
+{
+	if ($f3)
+		{ die "sorry, 3-way gene level comparision is not implemented yet\n"; }
+
+	my %z1;
+	my %z2;
+
+	ReplaceValue( \%h1, \%tr2gene1 );
+	ReplaceValue( \%h2, \%tr2gene2 );
+
+	my %z2_found_in_z1;
+
+	foreach my $key (keys %h1)
+	{
+		$z1{ $h1{$key} } += 1;
+
+		if ( exists $h2{$key} )
+		{
+			$z2{ $h1{$key} } += 1;
+			$z2_found_in_z1{ $h2{$key} } += 1;
+		}
+	}
+
+	foreach my $key (keys %h2)
+	{
+		if ( ! exists $z2_found_in_z1{ $h2{$key} } )
+		{
+			$z2{ $h2{$key} } += 1
+		}
+	}
+
+	%h1 = %z1;
+	%h2 = %z2;
+}
+
+# these variables hold temporary information for comparisons
 
 my %shared_12;
 my %shared_13;
@@ -88,67 +148,7 @@ my %unique_1;
 my %unique_2;
 my %unique_3;
 
-ParseGFF( $f1, \%h1, \%tr2gene1 );
-ParseGFF( $f2, \%h2, \%tr2gene2 );
-ParseGFF( $f3, \%h3, \%tr2gene3 ) if $f3;
-
-my %z1;
-my %z2;
-my %z3;
-
-if ( $compare_trans or $compare_gene or $compare_multiGene or $compare_singleGene)
-{
-	%h1 = ReverseKeyValue(\%h1);
-	%h2 = ReverseKeyValue(\%h2);
-	%h3 = ReverseKeyValue(\%h3) if $f3;
-
-	if ($v)
-	{
-		print "# after reducing redundancy:\n";
-		print "# Transcripts-CDS in file $f1: ". (scalar keys %h1) ."\n";
-		print "# Transcripts-CDS in file $f2: ". (scalar keys %h2) ."\n";
-		print "# Transcripts-CDS in file $f3: ". (scalar keys %h3) ."\n" if $f3;
-	}
-
-	if ( $compare_gene or $compare_multiGene or $compare_singleGene)
-	{
-		ReplaceValue( \%h1, \%tr2gene1 );
-		ReplaceValue( \%h2, \%tr2gene2 );
-		ReplaceValue( \%h3, \%tr2gene3 ) if $f3;
-
-		if ($f3)
-			{ die "sorry, 3-way gene level comparision is not implemented yet\n"; } 
-
-		my %z2_found_in_z1;
-
-		foreach my $key (keys %h1)
-		{
-			$z1{ $h1{$key} } += 1;
-
-			if ( exists $h2{$key} )
-			{
-				$z2{ $h1{$key} } += 1;
-				$z2_found_in_z1{ $h2{$key} } += 1;
-			}
-		}
-
-		foreach my $key (keys %h2)
-		{
-			if ( ! exists $z2_found_in_z1{ $h2{$key} } )
-			{
-				$z2{ $h2{$key} } += 1
-			}
-		}
-
-		%h1 = %z1;
-		%h2 = %z2;
-	}
-}
-else
-{
-	FilterPseudo( $pseudo ) if $pseudo;
-	FilterMasked( $masked, $min_masked ) if $masked;
-}
+# run comparison
 
 if( !$f3 )
 {
@@ -364,8 +364,12 @@ sub HashKeysToArrIntervals
 		{
 			push @{$h{$1}}, [$2, $3, $key];
 		}
+		elsif ( $key =~ /^(.+?)_(\d+).*_(\d+)_[+-.] $/ or $key =~ /^(.+?)_(\d+).*_(\d+)_[+-.]_[012.] $/ )
+		{
+			push @{$h{$1}}, [$2, $3, $key];
+		}
 		else
-			{ die "error, unexpected key format found: $key\n"; }
+			{ die "error, unexpected key format found: \"$key\"\n"; }
 	}
 
 	foreach my $key (keys %h)
@@ -762,8 +766,7 @@ sub ParseGFF
 	{
 		next if( $line =~ /^\s*#/ );
 		next if( $line =~ /^\s*$/ );
-
-		next if ( $line !~ /\t/ );
+		next if( $line !~ /\t/ );
 		
 		if( $line =~ /^(\S+)\t\S+\t(\S+)\t(\d+)\t(\d+)\t\S+\t([-+.])\t(\S+)(\t(.*)|\s*)$/ )
 		{
@@ -778,36 +781,66 @@ sub ParseGFF
 			$attr = '' if ( !defined $attr );
 			$attr =~ s/\t//;
 
-			if ( $compare_cds and ( $type eq "CDS") )
-				{ ; }
-			elsif ( $compare_introns and ( $type =~ /^[Ii]ntron/) )
-				{ ; }
-			elsif ( $compare_starts and ( $type =~ /^[Ss]tart_codon/) )
-				{ ; }
-			elsif ( $compare_stops and ( $type =~ /^[Ss]top_codon/) )
-				{ ; }
-			elsif ( $compare_donors and ( $type =~ /^[Ii]ntron/) )
-				{ ; }
-			elsif ( $compare_acceptors and ( $type =~ /^[Ii]ntron/) )
-				{ ; }
-			elsif ( $compare_single and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
-				{ ; }
-			elsif ( $compare_initial and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ii]nitial|cds_type \"[Ii]nitial\")/ ))
-				{ ; }
-			elsif ( $compare_internal and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ii]nternal|cds_type \"[Ii]nternal\")/ ))
-				{ ; }
-			elsif ( $compare_terminal and ( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Tt]erminal|cds_type \"[Tt]erminal\")/ ))
-				{ ; }
-			elsif ( $compare_multi and ( $type eq "CDS") and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
-				{ ; }
-			elsif ( $compare_trans and ( $type eq "CDS") )
-				{ ; }
-			elsif ( $compare_gene and ( $type eq "CDS") )
-				{ ; }
-			elsif ( $compare_multiGene and ( $type eq "CDS") and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
-				{ ; }
-			elsif ( $compare_singleGene and ( $type eq "CDS") and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ ))
-				{ ; }
+			if ( $compare_cds )
+			{
+				if ( $type eq "CDS" ) {;} else {next;}
+			}
+			elsif ( $compare_introns )
+			{
+				if ( $type =~ /^[Ii]ntron/ ) {;} else {next;}
+			}
+			elsif ( $compare_starts )
+			{
+				if ( $type =~ /^[Ss]tart_codon/ ) {;} else {next;}
+			}
+			elsif ( $compare_stops )
+			{
+				if ( $type =~ /^[Ss]top_codon/ ) {;} else {next;}
+			}
+			elsif ( $compare_donors )
+			{
+				if ( $type =~ /^[Ii]ntron/ ) {;} else {next;}
+			}
+			elsif ( $compare_acceptors )
+			{
+				if ( $type =~ /^[Ii]ntron/ ) {;} else {next;}
+			}
+			elsif ( $compare_single )
+			{
+				if (( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ )) {;} else {next;}
+			}
+			elsif ( $compare_initial )
+			{
+				if (( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ii]nitial|cds_type \"[Ii]nitial\")/ )) {;} else {next;}
+			}
+			elsif ( $compare_internal )
+			{
+				if (( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Ii]nternal|cds_type \"[Ii]nternal\")/ )) {;} else {next;}
+			}
+			elsif ( $compare_terminal )
+			{
+				if (( $type eq "CDS" ) and ( $attr =~ /(cds_type=[Tt]erminal|cds_type \"[Tt]erminal\")/ )) {;} else {next;}
+			}
+			elsif ( $compare_multi )
+			{
+				if (( $type eq "CDS" ) and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ )) {;} else {next;}
+			}
+			elsif ( $compare_trans )
+			{
+				if ( $type eq "CDS" ) {;} else {next;}
+			}
+			elsif ( $compare_gene )
+			{
+				if ( $type eq "CDS" ) {;} else {next;}
+			}
+			elsif ( $compare_multiGene )
+			{
+				if (( $type eq "CDS") and not ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ )) {;} else {next;}
+			}
+			elsif ( $compare_singleGene )
+			{
+				if (( $type eq "CDS") and ( $attr =~ /(cds_type=[Ss]ingle|cds_type \"[Ss]ingle\")/ )) {;} else {next;}
+			}
 			else
 				{ next; }
 
@@ -816,8 +849,12 @@ sub ParseGFF
 				print "warning, strand is not defined: $line" if ($strand eq ".");
 			}
 
+			# start of uniqie key for most of the comparisons
+			# 
 			my $key = $id ."_". $start ."_". $end ."_". $strand;
 			
+			# donors and acceptors have only one coordinate, so restart key in new form in these cases
+
 			if ( $compare_donors )
 			{
 				if ( $strand eq "+" )
@@ -828,6 +865,7 @@ sub ParseGFF
 				{
 					$key = $id ."_". $end   ."_". $strand;
 				}
+				else {die;}
 			}
 
 			if ( $compare_acceptors )
@@ -840,6 +878,7 @@ sub ParseGFF
 				{
 					$key = $id ."_". $start ."_". $strand;
 				}
+				else {die;}
 			}
 
 			if ( ! $no_phase )
@@ -847,7 +886,10 @@ sub ParseGFF
 				$key .= "_". $ph;
 			}
 
-			# Only GTF format for now
+			# Gene and transcript ID's are parsed from only from GTF format for now
+			# This procedure creates temporary key - to - true key hash
+			# Hash should be reversed after processing of file
+			# This is done at the end of the sub
 
 			if ( $compare_trans or $compare_gene or $compare_multiGene or $compare_singleGene )
 			{
@@ -906,10 +948,29 @@ sub ParseGFF
 		print "# Initial-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_initial;
 		print "# Internal-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_internal;
 		print "# Terminal-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_terminal;
-		print "# Transcripts-CDS in file $name: ". (scalar keys %$ref) ."\n" if ( $compare_trans or $compare_gene );
+	}
+
+	if ( $compare_trans or $compare_gene or $compare_multiGene or $compare_singleGene )
+	{
+		if ($v)
+		{
+			print "# Transcripts-CDS in file $name: ". (scalar keys %$ref) ."\n" if ( $compare_trans or $compare_gene );
+			print "# Transcripts-multi-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_multiGene;
+			print "# Transcripts-single-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_singleGene;
+		}
+
+		ReverseKeyValue( $ref );
+
+		if ($v)
+		{
+			print "# After removal of duplications:\n";
+			print "# Transcripts-CDS in file $name: ". (scalar keys %$ref) ."\n" if ( $compare_trans or $compare_gene );
+			print "# Transcripts-multi-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_multiGene;
+			print "# Transcripts-single-CDS in file $name: ". (scalar keys %$ref) ."\n" if $compare_singleGene;
+		}
 	}
 	
-#	print Dumper($ref) if $debug;
+#	print Dumper($ref);
 }
 # ------------------------------------------------
 sub ReverseKeyValue
@@ -920,9 +981,14 @@ sub ReverseKeyValue
         foreach my $key (keys %{$ref})
         {
                 $h{ $ref->{$key} } .= ($key ." ");
+
+		delete $ref->{$key};
         }
 
-        return %h;
+	foreach my $key (keys %h)
+	{
+		$ref->{$key} = $h{$key};
+	}
 }
 # ------------------------------------------------
 sub CheckBeforeRun
@@ -944,6 +1010,11 @@ sub CheckBeforeRun
 	if ( $pseudo )
 	{
 		die "error, file not found: option --pseudo $pseudo\n" if ( ! -e $pseudo );
+	}
+
+	if ( $masked )
+	{
+		die "error, file not found: option --mask $masked\n" if ( ! -e $masked )
 	}
 
 	if ( $original )
@@ -1016,13 +1087,14 @@ sub ParseCMD
 	$count += 1 if $compare_singleGene;
 	$count += 1 if $compare_trans;
 
-	if ($count == 0 )
+	if ($count > 1)
+	{
+		die "error, more than one comparison type was specified on command line: $count\n";
+	}
+
+	if ($count == 0)
 	{
 		$compare_cds = 1;
-	}
-	elsif ($count > 1)
-	{
-		die "error, more thean one comparision type was specifed on command line\n";
 	}
 
 	$v = 1 if $debug;
@@ -1044,15 +1116,15 @@ Optional:
 
    --pseudo [name] file with pseudogene coordinates in GFF style format;
                    with this option program
-                   excludes pseudo regions overlaping with region from --f1
-                   excludes regions from --f2 and --f3 which overlap pseudo regions
+                     a. removes 'pseudo' label from pseudo regions overlapping with --f1
+                     b. excludes from comparison regions from --f2 and --f3 which overlap pseudo regions
 
-   --masked [name] file with coordinates of masked regions
-                   with this option program any region which overlaps masking
-                   is excluded from calculations
-   --min_mask [$min_masked] minium length of the masked region to use
+   --masked [name] file with coordinates of masked regions;
+                   with this option any region which overlaps masking
+                   is excluded from comparison
+   --min_mask [$min_masked] minimum length of the masked region to use
 
-Default comparision is done for 'CDS' type
+Default comparison is done for 'CDS' type
 
    --cds         compare fields of 'CDS' type
    --introns     compare fields of 'intron' type
@@ -1061,20 +1133,24 @@ Default comparision is done for 'CDS' type
    --don         compare donors using 'intron' type
    --acc         compare acceptors using 'intron' type
 
-   --single      using cds_type label in attributes if CDS line
-   --initial     using cds_type label in attributes if CDS line
-   --internal    using cds_type label in attributes if CDS line
-   --terminal    using cds_type label in attributes if CDS line
-   --multi       compare not-single
+   Using optional 'cds_type' label in attribute field of GFF file
 
-   --trans       compare transcipt
-   --gene        compare full gene strcuture:
-                 at least one transcript was mached exactly
+   --single      compare exons of 'single' type
+   --initial     compare exons of 'initial' type
+   --internal    compare exons of 'internal' type
+   --terminal    compare exons of 'terminal' type
+   --multi       compare exons of NON 'single' type
 
-   --multigene    Compare multi-exon genes
-   --singlegene   Compare single-exon genes
+   Using gene and transcript ID's from GTF file
 
-   --no_phase    ignore phase of record in comparision
+   --trans       compare transcripts
+   --gene        compare genes
+                 gene is called 'found' if at least one transcript was matched exactly
+
+   --multigene   compare multi-exon genes only
+   --singlegene  compare single-exon genes only
+
+   --no_phase    ignore phase of record in comparison
 
 Output subset of records into file based on the overlap status:
 
@@ -1094,7 +1170,7 @@ Output subset of records into file based on the overlap status:
                  1 corresponds to file with --f1 name, etc.
 General:
    --verbose
-   --bedug
+   --debug
 
 Version: $VERSION
 
@@ -1102,4 +1178,4 @@ Version: $VERSION
 	exit 1;
 }
 # ------------------------------------------------
-
+ 
