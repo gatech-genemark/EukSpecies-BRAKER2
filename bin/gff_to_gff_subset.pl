@@ -58,8 +58,8 @@ my %allowed =
 	"similarity" => 1,
 	"match" => 1,
 
-#	"five_prime_UTR" => 1,
-#	"three_prime_UTR" => 1,
+	"five_prime_UTR" => 1,
+	"three_prime_UTR" => 1,
 	"intron" => 1,
 	"transposable_element" => 1,
 

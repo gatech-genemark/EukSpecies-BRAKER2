@@ -96,13 +96,12 @@ enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds
 gff3_to_gtf.pl ref.gff3 ref.gtf
 
 # check
-compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
-/home/braker/src/eval-2.2.8/validate_gtf.pl -c annot.gtf
+compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gff3
+compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gtf
+/home/braker/src/eval-2.2.8/validate_gtf.pl  ref.gtf
 
-mv annot.gff3 ../annot/
-mv annot.gtf  ../annot/
-mv ref.gff3   ../annot/
-mv ref.gtf    ../annot/
+mv ref.gff3   ../annot/annot.gff3
+mv ref.gtf    ../annot/annot.gtf
 
 gzip Araport11_GFF3_genes_transposons.201606.gff
 

@@ -24,7 +24,7 @@ open( my $IN, $gff3) or die "error on open file: $gff3\n";
 open( my $OUT, ">", $gtf) or die "error on open file: $gtf\n";
 while(<$IN>)
 {
-	if ( /\tCDS\t/ or /\t[Ss]tart_codon\t/ or /\t[Ss]top_codon\t/ or /\t[Ii]ntron\t/ )
+	if ( /\tCDS\t/ or /\t[Ss]tart_codon\t/ or /\t[Ss]top_codon\t/ or /\t[Ii]ntron\t/ or /\tgap\t/ )
 	{
 		chomp;
 
@@ -63,6 +63,10 @@ while(<$IN>)
 			if( $gff[8] =~ /count=(\S+?);/ )
 			{
 				$line .= " count \"$1\"\;";
+			}
+			if( $gff[8] =~ /site_seq=(\S+?);/ )
+			{
+				$line .= " site_seq \"$1\"\;";;
 			}
 
 			$line .= "\n";
