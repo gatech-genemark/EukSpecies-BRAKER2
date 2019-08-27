@@ -95,7 +95,7 @@ mv tmp_annot.gff3 annot.gff3
 /home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
 
-enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds 
+enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds --seq ../data/genome.fasta --v --warnings
 gff3_to_gtf.pl ref.gff3 ref.gtf
 
 # check
