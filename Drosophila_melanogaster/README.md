@@ -48,7 +48,7 @@ gzip  GCF_000001215*.fna
 ### Masking: _de novo_ and _species specific_
 Run _de novo_ masking of genome using RepeatModeler.  
 Run this on AWS node configured for RM:  
-    ec2-13-59-253-165.us-east-2.compute.amazonaws.com
+    ec2-13-59-253-165.us-east-2.compute.amazonaws.com  
 ```
 ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 # set the environment
@@ -62,7 +62,7 @@ mkdir -p data RModeler RMasker
 cd data
 scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data/genome.fasta  .
   ## password
-cd ..
+cd /data/$species/
 cp ../bin/run_masking.sh .
 nohup ./run_masking.sh >&  loginfo &
 # wait and check
@@ -81,10 +81,10 @@ wget ftp://ftp.flybase.net/releases/FB2019_03/dmel_r6.28/gff/dmel-all-no-analysi
 gunzip  dmel-all-no-analysis-*.gff.gz
 
 # select 
-gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out tmp_annot.gff3  --list list.tbl  --col 2
+gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out annot.gff3  --list list.tbl  --col 2
 
 # check
-/home/tool/gt/bin/gt  gff3validator  tmp_annot.gff3
+/home/tool/gt/bin/gt  gff3validator annot.gff3
 
 # make nice
 # some CDS lines with multiple parents require different phases : this creates a new CDS line with corrected phase
