@@ -54,6 +54,7 @@ ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 # set the environment
 umask 002
 species="Arabidopsis_thaliana"
+
 cd /data
 mkdir -p $species
 cd $species
@@ -87,8 +88,11 @@ echo "##gff-version 3" > tmp_annot.gff3
 probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep Chr | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_annot.gff3
 cat annot.gff3 | grep -v gff-version  >> tmp_annot.gff3
 mv tmp_annot.gff3 annot.gff3
+
 #check
 /home/tool/gt/bin/gt  gff3validator annot.gff3
+
+# make nice
 /home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
 
