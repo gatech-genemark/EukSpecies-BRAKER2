@@ -2,7 +2,7 @@
 Alex Lomsadze  
 Georgia Institute of Technology  
 2019  
-## Project setup
+## Project setup  
 ```
 species="Caenorhabditis_elegans"
 base="/storage3/w/alexl/EukSpecies"
@@ -47,7 +47,7 @@ gzip  GCF_000001735*.fna
 ### Masking: _de novo_ and _species specific_
 Run _de novo_ masking of genome using RepeatModeler.  
 Run this on AWS node configured for RM:  
-    ec2-13-59-253-165.us-east-2.compute.amazonaws.com
+    ec2-13-59-253-165.us-east-2.compute.amazonaws.com  
 ```
 ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 # set the environment
