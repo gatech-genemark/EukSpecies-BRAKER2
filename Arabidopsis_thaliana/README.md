@@ -89,7 +89,7 @@ probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep 
 cat annot.gff3 | grep -v gff-version  >> tmp_annot.gff3
 mv tmp_annot.gff3 annot.gff3
 
-#check
+# check
 /home/tool/gt/bin/gt  gff3validator annot.gff3
 
 # make nice
