@@ -83,7 +83,8 @@ gunzip  c_elegans.PRJNA13758.WS271.annotations.gff3.gz
 gff_to_gff_subset.pl  --in c_elegans.PRJNA13758.WS271.annotations.gff3  --out annot.gff3 --list list.tbl --col 2
 
 # reformat into "nice" gff3
-grep '^#' annot.gff3  | sort -k2,2 | uniq > tmp_annot.gff3
+echo "##gff-version 3" > tmp_annot.gff3
+probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep -v '^$' | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_annot.gff3
 cat annot.gff3 | grep -P '\tWormBase\t' >> tmp_annot.gff3
 mv tmp_annot.gff3 annot.gff3
 
