@@ -113,6 +113,15 @@ while ( my $record = <$IN> )
 		next;
 	}
 
+	if ( $record =~ /^##sequence-region\s+(\S+)\s*/ )
+	{
+		if ( exists $h{$1} )
+		{
+			print OUT $record;
+			next;
+		}
+	}
+
 	if ( $record =~/^(\S+)\t\S+\t(\S+)\t/ )
 	{
 		my $id = $1;
@@ -120,7 +129,7 @@ while ( my $record = <$IN> )
 
 		next if ( ! exists $allowed{$type} );
 
-		if ( exists( $h{$id} ) )
+		if ( exists $h{$id} )
 		{
 			$record =~ s/^$id/$h{$id}/;
 
