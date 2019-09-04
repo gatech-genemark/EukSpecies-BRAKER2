@@ -141,3 +141,10 @@ Assumes that annot.gtf is the enriched version of annotation with **incorrect st
 cd $base/annot
 flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf --completeTranscriptsOutput completeTranscripts.gtf --fullOutput annot_fixed_partial.gtf --completeGenesOutput completeGenes.gtf --incompleteGenesOutput incompleteGenes.gtf
 ```
+
+Apply this selection on APPRIS
+
+```
+~/scripts/compare_intervals_exact.pl --f1 appris.gtf --f2 annot_fixed_partial.gtf --out appris_fixed_partial.gff --original 1 --shared12
+~/scripts/compare_intervals_exact.pl --f1 appris.gtf --f2 completeGenes.gtf --out appris_completeGenes.gff --original 1 --shared12
+```

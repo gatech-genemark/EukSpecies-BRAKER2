@@ -139,4 +139,5 @@ Create a version of annotation without Y chromosome
 ```
 cd $base/annot/
 grep -v "^Y" annot.gtf > annot_no_Y.gtf
+grep -v "^Y" appris.gtf > appris_no_Y.gtf
 ```
