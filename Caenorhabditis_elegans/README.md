@@ -116,5 +116,25 @@ select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 cd $base/annot/
 soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
+###  APPRIS
+Data from http://appris.bioinfo.cnio.es
+```
+# download
+wget http://apprisws.bioinfo.cnio.es/pub/releases/2019_07.v29/datafiles/caenorhabditis_elegans/e97v29/appris_data.appris.txt
 
+# get PRINCIPAL transcript ID's 
+cat ../annot/annot.gtf | grep -E -o 'WBGene[0-9]+' |  sort | uniq > tmp_gene_names
+fgrep -f tmp_gene_names  appris_data.appris.txt | grep PRINCIPAL | cut -f3 | sed 's/^/Transcript:/' > appris.tbl
+rm tmp_gene_names
+../../bin/select_by_trascript_id_from_gtf.pl  appris.tbl  ../annot/annot.gtf  appris.gtf
+rm appris.tbl
+
+# If multiple PRINCICAL transcripts are annotated per gene, then select the longest 
+# In case of equal length, select the first one
+../../bin/get_longest_cds_gene_set.pl --in appris.gtf  --out appris.tbl -v
+../../bin/select_by_trascript_id_from_gtf.pl  appris.tbl  ../annot/annot.gtf  appris.gtf
+rm appris.tbl
+
+mv appris.gtf ../annot/
+```
 
