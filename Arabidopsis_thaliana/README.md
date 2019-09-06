@@ -28,7 +28,7 @@ gunzip  GCF_000001735*.fna.gz
 
 # create ID table
 grep '^>' GCF*.fna > deflines
-cat deflines | grep -v NC_000932 | grep -v NC_037304 | cut -f1,5 -d' ' | sed 's/^>//'  | sed 's/ / Chr/' > list.tbl
+cat deflines | grep -v 'NC_000932\|NC_037304' | cut -f1,5 -d' ' | sed 's/^>//'  | sed 's/ / Chr/' > list.tbl
 
 # select and reformat sequence
 get_fasta_with_tag.pl --swap --in GCF_000001735.4_TAIR10.1_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
