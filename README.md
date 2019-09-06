@@ -1,8 +1,8 @@
 # EukSpecies  
-Eukaryotic species gene prediction protocols  
-
-Shared components are described in this document.  
-Species specific commands are in species README folders/files.  
+Gene prediction protocol for some eukaryotic species  
+  
+Only shared components are described in this document.  
+Species specific commands are in species README files.  
 ### Installation  
 ```
 cd /storage3/w/alexl/
@@ -18,7 +18,7 @@ Setup environment variables before each work session.
 ### Genome sequence
 Download genomic sequence and reformat it:  
  * Input sequence should be in FASTA format.
- * Unique sequence ID ahouls have no white space symbols in it
+ * Unique sequence ID should have no white space symbols in it.
  * Simplify FASTA definition line (defline). First word in defline should be a unique sequence identifier.
  * Select only nuclear DNA sequences from genome (exclude or separate organelles).
  * Set all sequence letters into uppercase.
