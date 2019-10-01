@@ -18,7 +18,7 @@ use Getopt::Long qw( GetOptions );
 use Storable qw(dclone);
 use Data::Dumper;
 
-my $VERSION = "v4_2019";
+my $VERSION = "v5_2019";
 
 # ------------------------------------------------
 my $v = '';
@@ -111,6 +111,12 @@ if ( $compare_gene or $compare_multiGene or $compare_singleGene)
 	ReplaceValue( \%h1, \%tr2gene1 );
 	ReplaceValue( \%h2, \%tr2gene2 );
 
+	if ($v)
+	{
+		CountDistrTrPerGene(\%h1);
+		CountDistrTrPerGene(\%h2);
+	}
+
 	my %z2_found_in_z1;
 
 	foreach my $key (keys %h1)
@@ -162,6 +168,30 @@ else
 exit 0;
 
 # ================= subs =========================
+sub CountDistrTrPerGene
+{
+	my $ref = shift;
+
+	my %tmp_gene_tr_count;
+	foreach my $key (keys %{$ref})
+	{
+		$tmp_gene_tr_count{$ref->{$key}} += 1;
+	}
+
+	my %tmp_hist;
+	foreach my $key (keys %tmp_gene_tr_count)
+	{
+		$tmp_hist{ $tmp_gene_tr_count{$key} } += 1;
+	}
+
+	print "# transc-per-gene hist\n";
+
+	foreach my $key ( sort{$a<=>$b} keys %tmp_hist )
+	{
+		print "# $key $tmp_hist{$key}\n";
+	}
+}
+# ------------------------------------------------
 sub ReplaceValue
 {
 	my $ref = shift;
