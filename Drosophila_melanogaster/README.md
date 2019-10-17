@@ -31,7 +31,7 @@ grep '^>' GCF*.fna > deflines
 # move sequence IDs to "2L" style
 cat deflines | grep -Ev 'NW_00|NC_024511'| cut -f1,5 -d' ' | sed 's/^>//' > list.tbl
 
-# select and reformat sequence
+# select and reformat sequence; all uppercase 
 get_fasta_with_tag.pl --swap --in GCF_000001215*.fna   --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
@@ -43,7 +43,7 @@ probuild --stat --details --seq genome.fasta
 mv genome.fasta ../data/genome.fasta
 
 # clean tmp files
-rm defline tmp_genome.fasta
+rm tmp_genome.fasta
 gzip  GCF_000001215*.fna
 ```
 ### Masking: _de novo_ and _species specific_
@@ -72,7 +72,7 @@ scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$s
   ## password
 exit
 ```
-Get masking coordinates from soft-masked sequence
+Get masking coordinates from soft-masked sequence  
 ```
 cd $base/annot/
 soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
@@ -89,13 +89,17 @@ gunzip  dmel-all-no-analysis-*.gff.gz
 # select 
 gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out annot.gff3  --list list.tbl  --col 2
 
-# check
+# check: fails on wrong format
 /home/tool/gt/bin/gt  gff3validator annot.gff3
 
 # make nice
 # some CDS lines with multiple parents require different phases : this creates a new CDS line with corrected phase
 /home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
+
+# separate pseudo
+cd $base/annot/
+select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 
 enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds --seq ../data/genome.fasta --v --warnings
 gff3_to_gtf.pl ref.gff3 ref.gtf
@@ -107,18 +111,13 @@ compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gtf
 # do not use "-f" fixed by eval version
 /home/braker/src/eval-2.2.8/validate_gtf.pl  ref.gtf
 
-mv ref.gff3   ../annot/annot.gff3
-mv ref.gtf    ../annot/annot.gtf
+# move files to annot folder
+mv ref.gff3     ../annot/annot.gff3
+mv ref.gtf      ../annot/annot.gtf
+mv pseudo.gff3  ../annot/
 
+rm annot.gff3
 gzip dmel-all-no-analysis-*.gff
-
-# separate pseudo
-cd $base/annot/
-select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
-
-# masking coordinates
-cd $base/annot/
-soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
 ###  APPRIS
 Data from http://appris.bioinfo.cnio.es
