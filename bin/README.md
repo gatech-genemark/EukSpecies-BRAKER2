@@ -3,13 +3,13 @@ Alex Lomsadze
 Georgia Institute of Technology  
 2019  
 
-## install third-party GaTech tools
+## Install third-party GaTech tools
 Tools from other projects, which were not modified in this project
 * probuild
 ```
 cd $base/bin
 ```
-## install third-party tools
+## Install third-party tools
 ```
 cd $base/bin
 # Get from softmasked genome coordinates of lowercase letters in tabular form
