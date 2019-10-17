@@ -19,7 +19,7 @@ mkdir -p arx annot data
 ```
 ### Genome sequence  
 Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001215.4  
-GenBank, RefSeq and TAIR nuclear DNA sequences are identical.  
+GenBank, RefSeq and FlyBase nuclear DNA sequences are identical.  
 ```
 # download data
 cd $base/arx
@@ -28,7 +28,8 @@ gunzip  GCF_000001215*.fna.gz
 
 # create ID table
 grep '^>' GCF*.fna > deflines
-cat defline | grep -v NW_00  | grep -v NC_024511 | cut -f1,5 -d' ' | sed 's/^>//' > list.tbl
+# move sequence IDs to "2L" style
+cat deflines | grep -Ev 'NW_00|NC_024511'| cut -f1,5 -d' ' | sed 's/^>//' > list.tbl
 
 # select and reformat sequence
 get_fasta_with_tag.pl --swap --in GCF_000001215*.fna   --out tmp_genome.fasta  --list list.tbl --v
@@ -70,6 +71,11 @@ cd RMasker
 scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
   ## password
 exit
+```
+Get masking coordinates from soft-masked sequence
+```
+cd $base/annot/
+soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
 ### Annotation  
 Download annotation from FlyBase. NCBI RefSeq is using annotation from FlyBase.  
