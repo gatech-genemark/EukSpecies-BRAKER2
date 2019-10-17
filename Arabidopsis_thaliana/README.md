@@ -119,6 +119,7 @@ mv ref.gff3     ../annot/annot.gff3
 mv ref.gtf      ../annot/annot.gtf
 mv pseudo.gff3  ../annot/
 
+rm annot.gff3
 gzip Araport11_GFF3_genes_transposons.201606.gff
 ```
 
