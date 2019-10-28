@@ -30,7 +30,7 @@ grep '^>' GCF*.fna > deflines
 # move sequence IDs to "II" style
 cat deflines | grep -v NC_001328 | cut -f1,5 -d' ' | sed 's/^>//'  > list.tbl
 
-# select and reformat sequence; all uppercase
+# select and reformat sequence; all uppercase 
 get_fasta_with_tag.pl --swap --in GCF_000002985.6_WBcel235_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
@@ -71,7 +71,7 @@ scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$s
   ## password
 exit
 ```
-Get masking coordinates from soft-masked sequence
+Get masking coordinates from soft-masked sequence  
 ```
 cd $base/annot/
 soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
@@ -101,6 +101,9 @@ mv tmp_annot.gff3 annot.gff3
 /home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
 
+# separate pseudo
+select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
+
 enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds --seq ../data/genome.fasta --v --warnings
 gff3_to_gtf.pl ref.gff3 ref.gtf
 
@@ -109,18 +112,13 @@ compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gff3
 compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gtf
 /home/braker/src/eval-2.2.8/validate_gtf.pl  ref.gtf
 
-mv ref.gff3   ../annot/annot.gff3
-mv ref.gtf    ../annot/annot.gtf
+# move files to annot folder
+mv ref.gff3     ../annot/annot.gff3
+mv ref.gtf      ../annot/annot.gtf
+mv pseudo.gff3  ../../annot/pseudo.gff3
 
+rm annot.gff3
 gzip c_elegans.PRJNA13758.WS271.annotations.gff3
-
-# separate pseudo
-cd $base/annot/
-select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
-
-# masking coordinates
-cd $base/annot/
-soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
 ###  APPRIS
 Data from http://appris.bioinfo.cnio.es
