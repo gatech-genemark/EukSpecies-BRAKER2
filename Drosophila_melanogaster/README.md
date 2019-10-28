@@ -93,12 +93,13 @@ gff_to_gff_subset.pl  --in dmel-all-no-analysis-r6.28.gff  --out annot.gff3  --l
 /home/tool/gt/bin/gt  gff3validator annot.gff3
 
 # make nice
-# some CDS lines with multiple parents require different phases : this creates a new CDS line with corrected phase
+# some CDS lines with multiple parents require different phases and thus have "." as a phase
+# this splits such parents and adds phase
+# some 33 CDS phases were also modifyed by this program
 /home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
 
 # separate pseudo
-cd $base/annot/
 select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 
 enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds --seq ../data/genome.fasta --v --warnings
