@@ -27,9 +27,10 @@ gunzip  GCF_000002985*.fna.gz
 
 # create ID table
 grep '^>' GCF*.fna > deflines
+# move sequence IDs to "II" style
 cat deflines | grep -v NC_001328 | cut -f1,5 -d' ' | sed 's/^>//'  > list.tbl
 
-# select and reformat sequence
+# select and reformat sequence; all uppercase
 get_fasta_with_tag.pl --swap --in GCF_000002985.6_WBcel235_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
@@ -41,7 +42,7 @@ probuild --stat --details --seq genome.fasta
 mv genome.fasta ../data/genome.fasta
 
 # clean tmp files
-rm defline tmp_genome.fasta
+rm tmp_genome.fasta
 gzip  GCF_000001735*.fna
 ```
 ### Masking: _de novo_ and _species specific_
@@ -69,6 +70,11 @@ cd RMasker
 scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
   ## password
 exit
+```
+Get masking coordinates from soft-masked sequence
+```
+cd $base/annot/
+soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
 ### Annotation 
 Download annotation from WormBase. NCBI RefSeq is using annotation from WormBase.  
