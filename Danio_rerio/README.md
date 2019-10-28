@@ -137,14 +137,17 @@ grep -v -Ff incomplete_starts /storage_backup/prothint/Danio_rerio/annot/extra_s
 
 Assumes that annot.gtf is the enriched version of annotation with **incorrect starts and stops being part of partial CDS segments**.
 
-```
+```bash
 cd $base/annot
-flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf --completeTranscriptsOutput completeTranscripts.gtf --fullOutput annot_fixed_partial.gtf --completeGenesOutput completeGenes.gtf --incompleteGenesOutput incompleteGenes.gtf
+flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf \
+    --completeTranscriptsOutput completeTranscripts.gtf --fullOutput annot_fixed_partial.gtf --completeGenesOutput completeGenes.gtf \
+    --incompleteGenesOutput incompleteGenes.gtf
 ```
 
 Apply this selection on APPRIS
 
-```
-~/scripts/compare_intervals_exact.pl --f1 appris.gtf --f2 annot_fixed_partial.gtf --out appris_fixed_partial.gff --original 1 --shared12
-~/scripts/compare_intervals_exact.pl --f1 appris.gtf --f2 completeGenes.gtf --out appris_completeGenes.gff --original 1 --shared12
+```bash
+flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf appris.gtf --fullOutput appris_fixed_partial.gtf --completeGenesOutput \
+    /dev/null --incompleteTranscriptsOutput /dev/null --completeTranscriptsOutput /dev/null --incompleteGenesOutput /dev/null
+compare_intervals_exact.pl --f1 appris_fixed_partial.gtf --f2 completeGenes.gtf --out appris_completeGenes.gtf --original 1 --shared12
 ```
