@@ -93,7 +93,6 @@ my %allowed =
 	"D_gene_segment" => 1,
 	"J_gene_segment" => 1,
 	"V_gene_segment" => 1,
-
 );
 
 my %found;

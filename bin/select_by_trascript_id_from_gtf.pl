@@ -3,7 +3,7 @@
 # Alex Lomsadze
 # GaTech
 #
-#  Select from GTF file lines with transcript ID
+# Select from GTF file lines with transcript ID
 # ---------------------------
 
 use strict;
