@@ -126,22 +126,33 @@ Data from http://appris.bioinfo.cnio.es
 # download
 wget http://apprisws.bioinfo.cnio.es/pub/releases/2019_07.v29/datafiles/drosophila_melanogaster/BDGP6/appris_data.appris.txt
 
-# get PRINCIPAL transcript ID's
+# using the latest annotation - not the one used in APPRIS
+# this creates small mismatch bettween APPRIS original and one used in this project
+
+# get gene ID's from main annotation
 cat ../annot/annot.gtf | grep -E -o 'FBgn[0-9]+' | sort | uniq > tmp_gene_names
+
+# for each above gene ID get PRINSIPAL transcript ID
 fgrep -f tmp_gene_names  appris_data.appris.txt | grep PRINCIPAL | cut -f3  > appris.tbl
 rm tmp_gene_names
-../../bin/select_by_trascript_id_from_gtf.pl  appris.tbl  ../annot/annot.gtf  appris.gtf
 rm appris.tbl
 
-# If multiple PRINCICAL transcripts are annotated per gene, then select the longest
-# In case of equal length, select the first one
-../../bin/get_longest_cds_gene_set.pl --in appris.gtf  --out appris.tbl -v
-../../bin/select_by_trascript_id_from_gtf.pl  appris.tbl  ../annot/annot.gtf  appris.gtf
-rm appris.tbl
+# get annotation of PRINCIPAL isoforms from full annotation
+# some ID's 
+select_by_trascript_id_from_gtf.pl  appris.tbl  ../annot/annot.gtf  appris.gtf
+
+# when multiple PRINCICAL transcripts are annotated per gene 
+#  * select the longest
+#  * in case of equal length, select the first one
+get_longest_cds_gene_set.pl --in appris.gtf  --out appris_2.tbl -v
+select_by_trascript_id_from_gtf.pl  appris_2.tbl  ../annot/annot.gtf  appris.gtf
+rm appris_2.tbl
 
 mv appris.gtf ../annot/
+
+gzip appris_data.appris.txt
 ```
-Create a version of annotation without Y chromosome
+### annotation whithout Y chromosome
 ```
 cd $base/annot/
 grep -v "^Y" annot.gtf > annot_no_Y.gtf
