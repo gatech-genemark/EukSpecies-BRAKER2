@@ -127,7 +127,7 @@ Data from http://appris.bioinfo.cnio.es
 wget http://apprisws.bioinfo.cnio.es/pub/releases/2019_07.v29/datafiles/drosophila_melanogaster/BDGP6/appris_data.appris.txt
 
 # using the latest annotation - not the one used in APPRIS
-# this creates small mismatch bettween APPRIS original and one used in this project
+# this creates small mismatch between APPRIS original and one used in this project
 
 # get gene ID's from main annotation
 cat ../annot/annot.gtf | grep -E -o 'FBgn[0-9]+' | sort | uniq > tmp_gene_names
@@ -152,7 +152,7 @@ mv appris.gtf ../annot/
 
 gzip appris_data.appris.txt
 ```
-### annotation whithout Y chromosome
+### annotation without Y chromosome
 ```
 cd $base/annot/
 grep -v "^Y" annot.gtf > annot_no_Y.gtf
