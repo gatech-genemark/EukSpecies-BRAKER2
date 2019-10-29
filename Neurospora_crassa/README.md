@@ -19,7 +19,6 @@ mkdir -p arx annot data
 ```
 ### Genome sequence  
 Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000182925.2  
-GenBank, RefSeq and TAIR nuclear DNA sequences are identical.  
 ```
 # download data
 cd $base/arx
@@ -28,9 +27,9 @@ gunzip  GCF_000182925*.fna.gz
 
 # create ID table
 grep '^>' GCF*.fna > deflines
-cat deflines | grep -v '>NW_' | grep -v NC_026614 | cut -f1,7 -d' ' | tr -d ',' | tr -d '>' > list.tbl
+cat deflines | grep -v '>NW_' | grep -v NC_026614 | cut -f1,7 -d' ' | tr -d ',' | tr -d '>' | sed 's/ / Supercontig_ /' > list.tbl
 
-# Attention, modify manually sequence ID's in list.tbl to match the annoatation file
+# Modify manually sequence ID's in the second column of list.tbl to match the annoatation file
 
 # select and reformat sequence
 get_fasta_with_tag.pl --swap --in GCF_000182925.2_NC12_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
