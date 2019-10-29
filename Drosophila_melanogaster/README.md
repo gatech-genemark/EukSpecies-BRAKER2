@@ -134,12 +134,13 @@ cat ../annot/annot.gtf | grep -E -o 'FBgn[0-9]+' | sort | uniq > tmp_gene_names
 
 # for each above gene ID get PRINSIPAL transcript ID
 fgrep -f tmp_gene_names  appris_data.appris.txt | grep PRINCIPAL | cut -f3  > appris.tbl
-rm tmp_gene_names
-rm appris.tbl
 
 # get annotation of PRINCIPAL isoforms from full annotation
 # some ID's 
 select_by_trascript_id_from_gtf.pl  appris.tbl  ../annot/annot.gtf  appris.gtf
+
+rm tmp_gene_names
+rm appris.tbl
 
 # when multiple PRINCICAL transcripts are annotated per gene 
 #  * select the longest
