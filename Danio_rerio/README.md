@@ -144,10 +144,9 @@ flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf annot.gtf --incomplet
     --incompleteGenesOutput incompleteGenes.gtf
 ```
 
-Apply this selection on APPRIS
+Select complete genes in APPRIS.
 
 ```bash
 flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf appris.gtf --fullOutput appris_fixed_partial.gtf --completeGenesOutput \
-    /dev/null --incompleteTranscriptsOutput /dev/null --completeTranscriptsOutput /dev/null --incompleteGenesOutput /dev/null
-compare_intervals_exact.pl --f1 appris_fixed_partial.gtf --f2 completeGenes.gtf --out appris_completeGenes.gtf --original 1 --shared12
+    appris_completeGenes.gtf --incompleteTranscriptsOutput /dev/null --completeTranscriptsOutput /dev/null --incompleteGenesOutput /dev/null
 ```
