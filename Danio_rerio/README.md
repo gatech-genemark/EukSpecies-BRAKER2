@@ -108,26 +108,6 @@ mv appris.gtf ../annot/
 ```
 ### Dealing with incomplete CDS
 
-Identification of the problem
-
-```
-cd $base/arx/ensembl
-wget wget ftp://ftp.ensembl.org/pub/release-97/gtf/danio_rerio/Danio_rerio.GRCz11.97.gtf.gz
-gunzip Danio_rerio.GRCz11.97.gtf.gz
-# Label is not incomplete but cds_start_NF. Only in gtf files.
-grep cds_start_NF Danio_rerio.GRCz11.97.gtf | grep -Po "transcript_id[^;]+;"  | sort | uniq |  sed "s/transcript_id //" | tr -d \"\; > incomplete_starts
-# All of the transcripts with the NF label are present in the extra starts parsed
-grep  -Ff incomplete_starts /storage_backup/prothint/Danio_rerio/annot/extra_starts | wc -l
-
-# Same for stops
-grep cds_end_NF Danio_rerio.GRCz11.97.gtf | grep -Po "transcript_id[^;]+;"  | sort | uniq |  sed "s/transcript_id //" | tr -d \"\; > incomplete_stops
-grep  -Ff incomplete_stops /storage_backup/prothint/Danio_rerio/annot/extra_stops | wc -l
-
-# However, some extra starts/stops are still unaccounted for:
-grep -v -Ff incomplete_starts /storage_backup/prothint/Danio_rerio/annot/extra_starts
-```
-
-
 * The following script:
     * Flags partial CDS
     * Removes extra start and stops in the enriched annotation
