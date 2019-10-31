@@ -5,7 +5,7 @@ Georgia Institute of Technology
 ## Project setup  
 ```
 species="Arabidopsis_thaliana"
-base="/storage3/w/alexl/EukSpecies"
+base="/storage3/EukSpecies"
 export PATH="$base/bin:$PATH"
 export base="$base/$species"
 cd $base
@@ -61,14 +61,14 @@ mkdir -p $species
 cd $species
 mkdir -p data RModeler RMasker
 cd data
-scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data/genome.fasta  .
+scp alexl@topaz.gatech.edu:/storage3/EukSpecies/$species/data/genome.fasta  .
   ## password
 cd /data/$species/
 cp ../bin/run_masking.sh .
 nohup ./run_masking.sh >&  loginfo &
 # wait and check
 cd RMasker
-scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
+scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/EukSpecies/$species/data
   ## password
 exit
 ```
