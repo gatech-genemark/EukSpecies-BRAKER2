@@ -24,7 +24,7 @@ GenBank, RefSeq and TAIR nuclear DNA sequences are identical.
 # download data
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.4_TAIR10.1/GCF_000001735.4_TAIR10.1_genomic.fna.gz
-gunzip  GCF_*.fna.gz
+gunzip  GCF_*_genomic.fna.gz
 
 # create ID table
 grep '^>' GCF_*.fna > deflines
@@ -32,7 +32,7 @@ grep '^>' GCF_*.fna > deflines
 cat deflines | grep -Ev 'NC_000932|NC_037304' | cut -f1,5 -d' ' | sed 's/^>//'  | sed 's/ / Chr/' > list.tbl
 
 # select and reformat sequence; all uppercase 
-get_fasta_with_tag.pl --swap --in GCF_000001735.4_TAIR10.1_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
+get_fasta_with_tag.pl --swap --in GCF_*_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
 # check sequence and clean folder
@@ -44,7 +44,7 @@ mv genome.fasta ../data/genome.fasta
 
 # clean tmp files
 rm tmp_genome.fasta
-gzip  GCF_000001735*.fna
+gzip  GCF_*_genomic.fna
 ```
 ### Masking: _de novo_ and _species specific_
 Run _de novo_ masking of genome using RepeatModeler.  
