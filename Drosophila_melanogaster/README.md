@@ -24,15 +24,15 @@ GenBank, RefSeq and FlyBase nuclear DNA sequences are identical.
 # download data
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/215/GCF_000001215.4_Release_6_plus_ISO1_MT/GCF_000001215.4_Release_6_plus_ISO1_MT_genomic.fna.gz
-gunzip  GCF_000001215*.fna.gz
+gunzip  GCF_*_genomic.fna.gz
 
 # create ID table
-grep '^>' GCF*.fna > deflines
+grep '^>' GCF_*_genomic.fna > deflines
 # move sequence IDs to "2L" style
 cat deflines | grep -Ev 'NW_00|NC_024511'| cut -f1,5 -d' ' | sed 's/^>//' > list.tbl
 
 # select and reformat sequence; all uppercase 
-get_fasta_with_tag.pl --swap --in GCF_000001215*.fna   --out tmp_genome.fasta  --list list.tbl --v
+get_fasta_with_tag.pl --swap --in GCF_*_genomic.fna   --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
 # check sequence and clean folder
@@ -44,7 +44,7 @@ mv genome.fasta ../data/genome.fasta
 
 # clean tmp files
 rm tmp_genome.fasta
-gzip  GCF_000001215*.fna
+gzip  GCF_*_genomic.fna
 ```
 ### Masking: _de novo_ and _species specific_
 Run _de novo_ masking of genome using RepeatModeler.  
@@ -75,7 +75,11 @@ exit
 Get masking coordinates from soft-masked sequence  
 ```
 cd $base/annot/
-soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
+soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask.gff
+
+# collect stat
+cat mask.gff | awk '{sum+=($5-$4+1)}END{print sum}'
+cat mask.gff | awk '{if ( $5-$4+1 >= 1000) sum+=($5-$4+1)}END{print sum}'
 ```
 ### Annotation  
 Download annotation from FlyBase. NCBI RefSeq is using annotation from FlyBase.  
