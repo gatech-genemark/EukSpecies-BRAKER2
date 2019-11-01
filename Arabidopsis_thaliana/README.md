@@ -105,6 +105,7 @@ mv tmp_annot.gff3  annot.gff3
 # separate pseudo
 select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 
+# add features
 enrich_gff.pl --in annot.gff3 --out ref.gff3 --cds --seq ../data/genome.fasta --v --warnings
 gff3_to_gtf.pl ref.gff3 ref.gtf
 
