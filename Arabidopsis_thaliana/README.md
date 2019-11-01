@@ -24,10 +24,10 @@ GenBank, RefSeq and TAIR nuclear DNA sequences are identical.
 # download data
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.4_TAIR10.1/GCF_000001735.4_TAIR10.1_genomic.fna.gz
-gunzip  GCF_000001735*.fna.gz
+gunzip  GCF_*.fna.gz
 
 # create ID table
-grep '^>' GCF*.fna > deflines
+grep '^>' GCF_*.fna > deflines
 # move sequence IDs to Chr_1 style
 cat deflines | grep -Ev 'NC_000932|NC_037304' | cut -f1,5 -d' ' | sed 's/^>//'  | sed 's/ / Chr/' > list.tbl
 
