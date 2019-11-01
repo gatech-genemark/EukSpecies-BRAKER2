@@ -75,7 +75,11 @@ exit
 Get masking coordinates from soft-masked sequence 
 ```
 cd $base/annot/
-soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
+soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask.gff
+
+# collect stat
+cat mask.gff | awk '{sum+=($5-$4+1)}END{print sum}'
+cat mask.gff | awk '{if ( $5-$4+1 >= 1000) sum+=($5-$4+1)}END{print sum}'
 ```
 ### Annotation  
 Download annotation from TAIR. NCBI RefSeq is using annotation from TAIR.  
