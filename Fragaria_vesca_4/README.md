@@ -4,7 +4,7 @@ Georgia Institute of Technology
 2019  
 ## Project setup  
 ```
-species="Fragaria_vesca_5"
+species="Fragaria_vesca_4"
 base="/storage3/EukSpecies"
 export PATH="$base/bin:$PATH"
 export base="$base/$species"
@@ -22,37 +22,29 @@ Assembly description is at
 ```
 # download data
 cd $base/arx
-wget 
-gunzip  GCA_*.fna.gz
-
 wget ftp://ftp.bioinfo.wsu.edu/www.rosaceae.org/Fragaria_vesca/Fvesca-genome.v4.0.a1/assembly/Fragaria_vesca_v4.0.a1.fasta.gz
 gunzip Fragaria_vesca_v4.0.a1.fasta.gz
+flip -u Fragaria_vesca_v4.0.a1.fasta
 
 # create ID table
-grep '^>' GCA_*.fna > deflines
+grep '^>' F*.fasta > deflines
 # move sequence IDs to "MtrunA17Chr" style
-cat deflines | grep -v "PSQE0"   | cut -f1,8 -d' ' | cut -b2- | sed 's/ / MtrunA17Chr/' | tr -d ','  > list.tbl
-cat deflines | grep "PSQE0"   | cut -f1,7 -d' ' | cut -b2- |  tr -d ','  >> list.tbl
+cat deflines | cut -b2- | awk '{print $1 "\t" $1}' > list.tbl
 
 # select and reformat sequence; all uppercase 
-get_fasta_with_tag.pl --swap --in GCA_*_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
+get_fasta_with_tag.pl --swap --in F*.fasta  --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
-# using original masking
-probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta.masked_genbank --uppercase 0  --letters_per_line 60 --original
-
 # check sequence and clean folder
-probuild --stat --details --seq tmp_genome.fasta
 probuild --stat --details --seq genome.fasta
-probuild --stat --details --seq genome.fasta.masked_genbank
+probuild --stat --details --seq tmp_genome.fasta
 
 # put in work folder
 mv genome.fasta ../data/genome.fasta
-mv genome.fasta.masked_genbank ../data/genome.fasta.masked_genbank
 
 # clean tmp files
 rm tmp_genome.fasta
-gzip  GCA_*_genomic.fna
+gzip F*.fasta
 ```
 ### Masking: _de novo_ and _species specific_
 Run _de novo_ masking of genome using RepeatModeler.  
@@ -62,7 +54,7 @@ Run this on AWS node configured for RM:
 ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 # set the environment
 umask 002
-species="Medicago_truncatula_5"
+species="Fragaria_vesca_4"
 cd /data
 mkdir -p $species
 cd $species
@@ -85,25 +77,29 @@ exit
 Get masking coordinates from soft-masked sequence 
 ```
 cd $base/annot/
-soft_fasta_to_3 < ../data/genome.fasta.masked_genbank | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask_genbank.gff
 soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask.gff
 
 # collect stat
-cat mask_genbank.gff | awk '{sum+=($5-$4+1)}END{print sum}'
-cat mask_genbank.gff | awk '{if ( $5-$4+1 >= 1000) sum+=($5-$4+1)}END{print sum}'
+cat mask.gff | awk '{sum+=($5-$4+1)}END{print sum}'
+cat mask.gff | awk '{if ( $5-$4+1 >= 1000) sum+=($5-$4+1)}END{print sum}'
 
 ```
 ### Annotation  
-Download annotation from https://medicago.toulouse.inra.fr/MtrunA17r5.0-ANR/
+Download annotation from 
 Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
 ```
 # download
 cd $base/arx
-wget https://medicago.toulouse.inra.fr/MtrunA17r5.0-ANR/downloads/1.6/MtrunA17r5.0-ANR-EGN-r1.6.gff3.zip
-unzip MtrunA17r5.0-ANR-EGN-r1.6.gff3.zip
+wget 
 
 # select 
-gff_to_gff_subset.pl --in MtrunA17r5.0-ANR-EGN-r1.6.gff3 --out annot.gff3 --list list.tbl --col 2
+gff_to_gff_subset.pl --in Fragaria_vesca_v4.0.a1.transcripts.gff3 --out annot.gff3 --list list.tbl --col 2
+
+# add GFF3 headers
+echo "##gff-version 3" > tmp_annot.gff3
+probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_annot.gff3
+cat annot.gff3 | grep -v gff-version  >> tmp_annot.gff3
+mv tmp_annot.gff3 annot.gff3
 
 # check
 /home/tool/gt/bin/gt  gff3validator annot.gff3
@@ -130,6 +126,6 @@ mv ref.gtf      ../annot/annot.gtf
 mv pseudo.gff3  ../annot/
 
 rm annot.gff3
-gzip MtrunA17r5.0-ANR-EGN-r1.6.gff3.gff3
+gzip Fragaria_vesca_v4.0.a1.transcripts.gff3
 ```
 

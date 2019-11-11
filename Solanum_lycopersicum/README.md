@@ -5,24 +5,19 @@ Alex Lomsadze
 Georgia Institute of Technology  
 2019  
 ## Project setup
-Project is set in bash shell.  
-
-Setup environment on GT cluster as:  
 ```
-umask 002
-
-base="/storage3/w/alexl/EukSpecies"
 species="Solanum_lycopersicum"
-
+base="/storage3/EukSpecies"
 export PATH="$base/bin:$PATH"
 export base="$base/$species"
 cd $base
 if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
+umask 002
 ```
 Create core folders  
 ```
 cd $base
-mkdir -p arx annot data mask
+mkdir -p arx annot data
 ```
 ### Assembly
 Download genomic sequence and reformat it:  
@@ -285,13 +280,28 @@ nohup hisat2 -p 15 -x ../genome  -1 $base/arx/SRR7959019_1.fastq -2 $base/arx/SR
 /storage/braker_c/bin/samtools/samtools sort -@10 -n SRR7959012.bam -o SRR7959012.s.bam
 /storage/braker_c/bin/samtools/samtools sort -@10 -n SRR7959019.bam -o SRR7959019.s.bam
 
-# parisng of introns is slow !
-
 cd $base/rnaseq
 mkdir stardb run_star
 cd $base/rnaseq/stardb
 /home/tool/STAR/bin/Linux_x86_64/STAR  --runMode genomeGenerate --genomeDir . --genomeFastaFiles $base/data/genome_REPET.fasta  --runThreadN 8
 cd $base/rnaseq/run_star
 /home/tool/STAR/bin/Linux_x86_64/STAR --genomeDir ../stardb/ --runThreadN 16  --readFilesIn $base/arx/SRR7959012_1.fastq,$base/arx/SRR7959019_1.fastq $base/arx/SRR7959012_2.fastq,$base/arx/SRR7959019_2.fastq
-
 ```
+### RNA-Seq based annotation parsing
+
+RNA-Seq was mapped to full genome using VALUS. Output of mapping was copied to this project at:
+```
+cd $base
+mkdir varus
+cd $base/varus
+cp /storage3/al_genomes/Solanum_lycopersicum/varus/cumintrons.stranded.gff  .   
+```
+From annotation two additional data sets were created:
+* set A, set of annoatated genes which have RNA-Seq based support for all annotated introns
+* set B, set of genes with introns and with at least one intron whithout RNA-Seq support
+```
+cd $base/annot
+select_by_introns.pl  --in_gtf annot.gtf  --out_gtf  A_annot.gtf --in_introns ../varus/cumintrons.stranded.gff --no_phase --v
+select_by_introns.pl  --in_gtf annot.gtf  --out_gtf  B_annot.gtf --in_introns ../varus/cumintrons.stranded.gff --no_phase --v  --reverse
+```
+
