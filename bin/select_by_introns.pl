@@ -16,7 +16,7 @@ use warnings;
 use Getopt::Long qw( GetOptions );
 use Data::Dumper;
 
-my $VERSION = "v1.1";
+my $VERSION = "v1.2";
 
 # ------------------------------------------------
 my $v = '';
@@ -39,6 +39,10 @@ ParseGFF( $in_introns, \%h );
 my %transc = ();
 ParseTransc( $in_gtf, \%transc );
 
+my $count_no_intron = 0;
+my $count_with_intron = 0;
+my $count_out = 0;
+
 open( my $OUT, ">" ,$out_gtf ) or die "error on open file $out_gtf: $!\n";
 foreach my $key (keys %transc)
 {
@@ -47,16 +51,40 @@ foreach my $key (keys %transc)
 		print "# $key\n";
 	}
 
-	if ( !$reverse and CompareIntrons( $transc{$key}, \%h ) )
+	if ( HasIntron( $transc{$key} ) )
 	{
-		print $OUT $transc{$key};
+		$count_with_intron += 1;
+
+		if ( CompareIntrons( $transc{$key}, \%h ) )
+		{
+			if ( ! $reverse )
+			{
+				print $OUT $transc{$key};
+				$count_out += 1;
+			}
+		}
+		else
+		{
+			if ( $reverse )
+			{
+				print $OUT $transc{$key};
+				$count_out += 1;
+			}
+		}
 	}
-	elsif ( $reverse and HasIntron( $transc{$key} ) )
+	else
 	{
-		print $OUT $transc{$key};
+		$count_no_intron += 1;
 	}
 }
 close $OUT;
+
+if($v)
+{
+	print "# genes_no_introns     $count_no_intron\n";
+	print "# genes_with_introns   $count_with_intron\n";
+	print "# genes_out            $count_out\n";
+}
 
 exit 0;
 
