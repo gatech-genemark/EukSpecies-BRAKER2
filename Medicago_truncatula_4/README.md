@@ -1,10 +1,10 @@
-# Species: _Medicago truncatula strain:A17 (barrel medic)  Assembly 5_  
+# Species: _Medicago truncatula strain:A17 (barrel medic)_  
 Alex Lomsadze  
 Georgia Institute of Technology  
 2019  
 ## Project setup  
 ```
-species="Medicago_truncatula_5"
+species="Medicago_truncatula"
 base="/storage3/EukSpecies"
 export PATH="$base/bin:$PATH"
 export base="$base/$species"
@@ -18,38 +18,32 @@ cd $base
 mkdir -p arx annot data
 ```
 ### Genome sequence  
-Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCA_003473485.2
+Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000219495.3  
 ```
 # download data
 cd $base/arx
-wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/003/473/485/GCA_003473485.2_MtrunA17r5.0-ANR/GCA_003473485.2_MtrunA17r5.0-ANR_genomic.fna.gz
-gunzip  GCA_*.fna.gz
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/219/495/GCF_000219495.3_MedtrA17_4.0/GCF_000219495.3_MedtrA17_4.0_genomic.fna.gz
+gunzip  GCF_*.fna.gz
 
 # create ID table
-grep '^>' GCA_*.fna > deflines
-# move sequence IDs to "MtrunA17Chr" style
-cat deflines | grep -v "PSQE0"   | cut -f1,8 -d' ' | cut -b2- | sed 's/ / MtrunA17Chr/' | tr -d ','  > list.tbl
-cat deflines | grep "PSQE0"   | cut -f1,7 -d' ' | cut -b2- |  tr -d ','  >> list.tbl
+grep '^>' GCF_*.fna > deflines
+# move sequence IDs to chr1 style
+cat deflines | grep -Ev '^>NW_|^>NC_003119'   | cut -f1,7 -d' ' | cut -b2- | sed 's/ / chr/' | tr -d ',' > list.tbl
 
 # select and reformat sequence; all uppercase 
-get_fasta_with_tag.pl --swap --in GCA_*_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
+get_fasta_with_tag.pl --swap --in GCF_*_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
-
-# using original masking
-probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta.masked_genbank --uppercase 0  --letters_per_line 60 --original
 
 # check sequence and clean folder
 probuild --stat --details --seq tmp_genome.fasta
 probuild --stat --details --seq genome.fasta
-probuild --stat --details --seq genome.fasta.masked_genbank
 
 # put in work folder
 mv genome.fasta ../data/genome.fasta
-mv genome.fasta.masked_genbank ../data/genome.fasta.masked_genbank
 
 # clean tmp files
 rm tmp_genome.fasta
-gzip  GCA_*_genomic.fna
+gzip  GCF_*_genomic.fna
 ```
 ### Masking: _de novo_ and _species specific_
 Run _de novo_ masking of genome using RepeatModeler.  
@@ -59,20 +53,17 @@ Run this on AWS node configured for RM:
 ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
 # set the environment
 umask 002
-species="Medicago_truncatula_5"
+species="Medicago_truncatula"
 cd /data
 mkdir -p $species
 cd $species
-mkdir -p data
+mkdir -p data RModeler RMasker
 cd data
 scp alexl@topaz.gatech.edu:/storage3/EukSpecies/$species/data/genome.fasta  .
   ## password
 cd /data/$species/
-mkdir run_a
-cd run_a
-mkdir RModeler RMasker
-cp  ../../bin/run_masking_denovo.sh .
-nohup ./run_masking_denovo.sh >&  loginfo &
+cp ../bin/run_masking.sh .
+nohup ./run_masking.sh >&  loginfo &
 # wait and check
 cd RMasker
 scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/EukSpecies/$species/data
@@ -82,25 +73,25 @@ exit
 Get masking coordinates from soft-masked sequence 
 ```
 cd $base/annot/
-soft_fasta_to_3 < ../data/genome.fasta.masked_genbank | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask_genbank.gff
-soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask.gff
-
-# collect stat
-cat mask_genbank.gff | awk '{sum+=($5-$4+1)}END{print sum}'
-cat mask_genbank.gff | awk '{if ( $5-$4+1 >= 1000) sum+=($5-$4+1)}END{print sum}'
-
+soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
 ```
 ### Annotation  
-Download annotation from https://medicago.toulouse.inra.fr/MtrunA17r5.0-ANR/
+Download annotation from http://www.medicagogenome.org  
 Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
 ```
 # download
 cd $base/arx
-wget https://medicago.toulouse.inra.fr/MtrunA17r5.0-ANR/downloads/1.6/MtrunA17r5.0-ANR-EGN-r1.6.gff3.zip
-unzip MtrunA17r5.0-ANR-EGN-r1.6.gff3.zip
+wget https://de.cyverse.org/dl/d/495B7D67-19AB-4C42-ABA8-8A146C9DCDBB/Mt4.0v2_genes_20140818_1100.gff3
+gunzip Mt4.0v2_genes_20140818_1100.gff3
 
 # select 
-gff_to_gff_subset.pl --in MtrunA17r5.0-ANR-EGN-r1.6.gff3 --out annot.gff3 --list list.tbl --col 2
+gff_to_gff_subset.pl --in Mt4.0v2_genes_20140818_1100.gff3 --out annot.gff3 --list list.tbl --col 2
+
+# reformat into "nice" gff3
+echo "##gff-version 3" > tmp_annot.gff3
+probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' | grep chr | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_annot.gff3
+cat annot.gff3 | grep -v gff-version  >> tmp_annot.gff3
+mv tmp_annot.gff3 annot.gff3
 
 # check
 /home/tool/gt/bin/gt  gff3validator annot.gff3
@@ -127,6 +118,6 @@ mv ref.gtf      ../annot/annot.gtf
 mv pseudo.gff3  ../annot/
 
 rm annot.gff3
-gzip MtrunA17r5.0-ANR-EGN-r1.6.gff3.gff3
+gzip Mt4.0v2_genes_20140818_1100.gff3
 ```
 
