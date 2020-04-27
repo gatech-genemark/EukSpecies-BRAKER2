@@ -1,23 +1,20 @@
-# Species: _Arabidopsis thaliana_  
-Alex Lomsadze  
-Georgia Institute of Technology  
-2019  
-## Project setup  
-```
-species="Arabidopsis_thaliana"
-base="/storage3/EukSpecies"
-export PATH="$base/bin:$PATH"
-export base="$base/$species"
-cd $base
-if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
+# Species: _Arabidopsis thaliana_
+
+Alex Lomsadze, Tomas Brina
+Georgia Institute of Technology
+2020
+
+## Project setup
+
+```bash
+base=$(pwd)
+export PATH="$base/../bin:$PATH"
 umask 002
-```
-Create core folders  
-```
-cd $base
+# Create core folders
 mkdir -p arx annot data
 ```
-### Genome sequence  
+
+### Genome sequence
 Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4  
 GenBank, RefSeq and TAIR nuclear DNA sequences are identical.  
 ```
