@@ -1,16 +1,16 @@
 # Scripts for processing eukaryotic species
 Alex Lomsadze, Tomas Bruna
-Georgia Institute of Technology  
+Georgia Institute of Technology
 2020
 
-## Install 
+## Installation Instructions
 
-## GaTech dependencies
+## GaTech Dependencies
 
 ### probuild
 Download `probuild` from http://topaz.gatech.edu/GeneMark/license_download.cgi -- select **GeneMark-ES/ET/EP** option. `probuild` is located in the root folder, copy it here, the `bin` folder of this project.
 
-## Install third-party tools
+## Install Third-party Tools
 
 Script which reports coordinates of lowercase letters in tabular format from softmasked genome in FASTA format. Program from https://www.biostars.org/p/134868/
 ```
@@ -25,4 +25,3 @@ gcc -o soft_fasta_to_3  soft_fasta_to_3.yy.c
 mv soft_fasta_to_3  ..
 rm soft_fasta_to_3.l soft_fasta_to_3.yy.c
 ```
-
