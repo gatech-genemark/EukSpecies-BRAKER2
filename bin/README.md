@@ -8,9 +8,18 @@ Georgia Institute of Technology
 ## GaTech Dependencies
 
 ### probuild
-Download `probuild` from http://topaz.gatech.edu/GeneMark/license_download.cgi -- select **GeneMark-ES/ET/EP** option. `probuild` is located in the root folder, copy it here, the `bin` folder of this project.
+Download `probuild` from http://topaz.gatech.edu/GeneMark/license_download.cgi -- select **GeneMark-ES/ET/EP** option. `probuild` is located in the root folder, copy it here, the `bin` folder of this project or add it to your `$PATH`.
 
-## Install Third-party Tools
+## Third-party Tools
+
+The following tools are assumed to be in the `$PATH` variable
+
+* [GenomeTools](http://genometools.org/index.html)
+* [bedtools](https://bedtools.readthedocs.io/en/latest/index.html)
+* [RepeatModeler](http://www.repeatmasker.org/RepeatModeler/)
+* [RepeatMasker](http://www.repeatmasker.org/RMDownload.html)
+
+### Coordinates from soft-masked sequence
 
 Script which reports coordinates of lowercase letters in tabular format from softmasked genome in FASTA format. Program from https://www.biostars.org/p/134868/
 ```
