@@ -1,7 +1,7 @@
 # Species: _Arabidopsis thaliana_
 
-Alex Lomsadze, Tomas Brina
-Georgia Institute of Technology
+Alex Lomsadze, Tomas Bruna,
+Georgia Institute of Technology,
 2020
 
 ## Project setup
