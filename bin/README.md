@@ -1,23 +1,15 @@
 # Scripts for processing eukaryotic species
-Alex Lomsadze  
+Alex Lomsadze, Tomas Bruna
 Georgia Institute of Technology  
-2019  
+2020
 
 ## Install 
-GaTech dependences
-* probuild
-```
-cd path_to_project_location
-cd bin
-mkdir –p src
-cd src
-git clone git@github.gatech.edu:al68/probuild.git
-cd probuild/src
-make
-cp probuild ../bin
-cd ..
-rm –rf probuild
-```
+
+## GaTech dependencies
+
+### probuild
+Download `probuild` from http://topaz.gatech.edu/GeneMark/license_download.cgi -- select **GeneMark-ES/ET/EP** option. `probuild` is located in the root folder, copy it here, the `bin` folder of this project.
+
 ## Install third-party tools
 
 Script which reports coordinates of lowercase letters in tabular format from softmasked genome in FASTA format. Program from https://www.biostars.org/p/134868/
