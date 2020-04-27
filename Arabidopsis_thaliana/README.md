@@ -66,6 +66,14 @@ soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\t
 cat mask.gff | awk '{sum+=($5-$4+1)}END{print sum}'
 cat mask.gff | awk '{if ( $5-$4+1 >= 1000) sum+=($5-$4+1)}END{print sum}'
 ```
+
+The masking coordinates can be applied to the unmasked genome with the following command:
+
+```bash
+cd $base/data
+bedtools maskfasta -fi genome.fasta -bed ../annot/mask.gff -fo genome.fasta.masked -soft
+```
+
 ### Annotation  
 Download annotation from TAIR. NCBI RefSeq is using annotation from TAIR.  
 Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
