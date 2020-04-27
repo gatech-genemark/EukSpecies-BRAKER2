@@ -15,9 +15,10 @@ mkdir -p arx annot data
 ```
 
 ### Genome sequence
-Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4  
-GenBank, RefSeq and TAIR nuclear DNA sequences are identical.  
-```
+Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000001735.4
+GenBank, RefSeq and TAIR nuclear DNA sequences are identical.
+
+```bash
 # download data
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/001/735/GCF_000001735.4_TAIR10.1/GCF_000001735.4_TAIR10.1_genomic.fna.gz
@@ -28,7 +29,7 @@ grep '^>' GCF_*.fna > deflines
 # move sequence IDs to Chr_1 style
 cat deflines | grep -Ev 'NC_000932|NC_037304' | cut -f1,5 -d' ' | sed 's/^>//'  | sed 's/ / Chr/' > list.tbl
 
-# select and reformat sequence; all uppercase 
+# select and reformat sequence; all uppercase
 get_fasta_with_tag.pl --swap --in GCF_*_genomic.fna  --out tmp_genome.fasta  --list list.tbl --v
 probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
 
@@ -73,16 +74,16 @@ cd $base/data
 bedtools maskfasta -fi genome.fasta -bed ../annot/mask.gff -fo genome.fasta.masked -soft
 ```
 
-### Annotation  
-Download annotation from TAIR. NCBI RefSeq is using annotation from TAIR.  
-Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
-```
+### Annotation
+Download annotation from TAIR. NCBI RefSeq is using annotation from TAIR.
+Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.
+```bash
 # download
 cd $base/arx
 wget https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_GFF3_genes_transposons.201606.gff.gz
 gunzip  Araport11_GFF3_genes_transposons.201606.gff.gz
 
-# select 
+# select
 gff_to_gff_subset.pl --in Araport11_GFF3_genes_transposons.201606.gff --out annot.gff3 --list list.tbl --col 2
 
 # reformat into "nice" gff3
@@ -92,10 +93,10 @@ cat annot.gff3 | grep -v gff-version  >> tmp_annot.gff3
 mv tmp_annot.gff3 annot.gff3
 
 # check
-/home/tool/gt/bin/gt  gff3validator annot.gff3
+gt gff3validator annot.gff3
 
 # make nice
-/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
+gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
 
 # separate pseudo
@@ -108,8 +109,6 @@ gff3_to_gtf.pl ref.gff3 ref.gtf
 # check
 compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gff3
 compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gtf
-
-/home/braker/src/eval-2.2.8/validate_gtf.pl  ref.gtf
 
 # move files to annot folder
 mv ref.gff3     ../annot/annot.gff3
