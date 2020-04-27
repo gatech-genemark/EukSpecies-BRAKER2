@@ -46,34 +46,19 @@ mv genome.fasta ../data/genome.fasta
 rm tmp_genome.fasta
 gzip  GCF_*_genomic.fna
 ```
-### Masking: _de novo_ and _species specific_
-Run _de novo_ masking of genome using RepeatModeler.  
-Run this on AWS node configured for RM:  
-    ec2-13-59-253-165.us-east-2.compute.amazonaws.com  
-```
-ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
-# set the environment
-umask 002
-species="Arabidopsis_thaliana"
 
-cd /data
-mkdir -p $species
-cd $species
-mkdir -p data RModeler RMasker
-cd data
-scp alexl@topaz.gatech.edu:/storage3/EukSpecies/$species/data/genome.fasta  .
-  ## password
-cd /data/$species/
-cp ../bin/run_masking.sh .
-nohup ./run_masking.sh >&  loginfo &
-# wait and check
-cd RMasker
-scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/EukSpecies/$species/data
-  ## password
-exit
+### _De novo_ Masking
+
+```bash
+cd $base/data
+BuildDatabase -engine wublast -name genome genome.fasta
+RepeatModeler -engine wublast -database genome
+RepeatMasker -engine wublast -lib genome-families.fa -xsmall genome.fasta
 ```
-Get masking coordinates from soft-masked sequence 
-```
+
+Get masking coordinates from soft-masked sequence
+
+```bash
 cd $base/annot/
 soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask.gff
 
@@ -127,5 +112,3 @@ mv pseudo.gff3  ../annot/
 rm annot.gff3
 gzip Araport11_GFF3_genes_transposons.201606.gff
 ```
-
-
