@@ -49,6 +49,8 @@ gzip  GCF_*_genomic.fna
 
 ### _De novo_ Masking
 
+Mask genome with RepeatModeler (v open-1.0.11) and RepeatMasker (v 1.332)
+
 ```bash
 cd $base/data
 BuildDatabase -engine wublast -name genome genome.fasta
