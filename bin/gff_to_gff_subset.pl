@@ -93,6 +93,13 @@ my %allowed =
 	"D_gene_segment" => 1,
 	"J_gene_segment" => 1,
 	"V_gene_segment" => 1,
+
+	"transcript" => 1,
+	"tRNA_gene" => 1,
+	"lincRNA_gene" => 1,
+	"lincRNA" => 1,
+	"miRNA_gene" => 1,
+	"miRNA" => 1,
 );
 
 my %found;
