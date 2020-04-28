@@ -1,25 +1,24 @@
 # Species: _Caenorhabditis_elegans_
-Alex Lomsadze  
-Georgia Institute of Technology  
-2019  
-## Project setup  
-```
-species="Caenorhabditis_elegans"
-base="/storage3/w/alexl/EukSpecies"
-export PATH="$base/bin:$PATH"
-export base="$base/$species"
-cd $base
-if [ "$(pwd)" != "$base" ]; then echo "error, folder not found: $base"; fi
+
+Alex Lomsadze, Tomas Bruna,
+Georgia Institute of Technology,
+2020
+
+## Project setup
+
+```bash
+base=$(pwd)
+export PATH="$base/../bin:$PATH"
 umask 002
+# Create core folders
+mkdir arx annot data
 ```
-Create core folders  
-```
-cd $base
-mkdir -p arx annot data
-```
-### Genome sequence  
+
+# Genome 
+
 Assembly description is at https://www.ncbi.nlm.nih.gov/assembly/GCF_000002985.6  
-```
+
+```bash
 # download data
 cd $base/arx
 wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/002/985/GCF_000002985.6_WBcel235/GCF_000002985.6_WBcel235_genomic.fna.gz
@@ -45,41 +44,42 @@ mv genome.fasta ../data/genome.fasta
 rm tmp_genome.fasta
 gzip  GCF_000001735*.fna
 ```
-### Masking: _de novo_ and _species specific_
-Run _de novo_ masking of genome using RepeatModeler.  
-Run this on AWS node configured for RM:  
-    ec2-13-59-253-165.us-east-2.compute.amazonaws.com  
-```
-ssh  alexl@ec2-13-59-253-165.us-east-2.compute.amazonaws.com
-# set the environment
-umask 002
-species="Caenorhabditis_elegans"
 
-cd /data
-mkdir -p $species
-cd $species
-mkdir -p data RModeler RMasker
-cd data
-scp alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data/genome.fasta  .
-  ## password
-cd /data/$species/
-cp ../bin/run_masking.sh .
-nohup ./run_masking.sh >&  loginfo &
-# wait and check
-cd RMasker
-scp  genome.fasta.masked  alexl@topaz.gatech.edu:/storage3/w/alexl/EukSpecies/$species/data
-  ## password
-exit
+### _De novo_ Masking
+
+Mask genome with RepeatModeler (v open-1.0.11) and RepeatMasker (v 1.332)
+
+```bash
+cd $base/data
+BuildDatabase -engine wublast -name genome genome.fasta
+RepeatModeler -engine wublast -database genome
+RepeatMasker -engine wublast -lib genome-families.fa -xsmall genome.fasta
 ```
-Get masking coordinates from soft-masked sequence  
+
+Get masking coordinates from soft-masked sequence
+
+```bash
+cd $base/annot
+soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3 "\t.\t.\t.\t." }' > mask.gff
+
+# collect stat
+cat mask.gff | awk '{sum+=($5-$4+1)}END{print sum}'
+cat mask.gff | awk '{if ( $5-$4+1 >= 1000) sum+=($5-$4+1)}END{print sum}'
 ```
-cd $base/annot/
-soft_fasta_to_3 < ../data/genome.fasta.masked | awk '{print $1 "\tsoft_masking\trepeat\t" $2+1 "\t" $3+1 "\t.\t.\t.\t." }' > mask.gff
+
+The masking coordinates can be applied to the unmasked genome with the following command:
+
+```bash
+cd $base/data
+bedtools maskfasta -fi genome.fasta -bed ../annot/mask.gff -fo genome.fasta.masked -soft
 ```
+
 ### Annotation 
+
 Download annotation from WormBase. NCBI RefSeq is using annotation from WormBase.  
 Select only protein coding genes from annotation and save it in GFF3 and GTF (stop codon included) formats.  
-```
+
+```bash
 # download
 cd $base/arx
 wget ftp://ftp.wormbase.org/pub/wormbase/species/c_elegans/PRJNA13758/gff/c_elegans.PRJNA13758.WS271.annotations.gff3.gz
@@ -95,10 +95,10 @@ cat annot.gff3 | grep -P '\tWormBase\t' >> tmp_annot.gff3
 mv tmp_annot.gff3 annot.gff3
 
 # check
-/home/tool/gt/bin/gt  gff3validator annot.gff3
+gt  gff3validator annot.gff3
 
 # make nice
-/home/tool/gt/bin/gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
+gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3  annot.gff3
 
 # separate pseudo
@@ -110,7 +110,6 @@ gff3_to_gtf.pl ref.gff3 ref.gtf
 # check
 compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gff3
 compare_intervals_exact.pl --f1 annot.gff3  --f2 ref.gtf
-/home/braker/src/eval-2.2.8/validate_gtf.pl  ref.gtf
 
 # move files to annot folder
 mv ref.gff3     ../annot/annot.gff3
@@ -120,9 +119,12 @@ mv pseudo.gff3  ../../annot/pseudo.gff3
 rm annot.gff3
 gzip c_elegans.PRJNA13758.WS271.annotations.gff3
 ```
+
 ###  APPRIS
+
 Data from http://appris.bioinfo.cnio.es
-```
+
+```bash
 # download
 wget http://apprisws.bioinfo.cnio.es/pub/releases/2019_07.v29/datafiles/caenorhabditis_elegans/e97v29/appris_data.appris.txt
 
