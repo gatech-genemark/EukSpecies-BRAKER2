@@ -11,7 +11,7 @@ base=$(pwd)
 export PATH="$base/../bin:$PATH"
 umask 002
 # Create core folders
-mkdir -p arx annot data
+mkdir arx annot data
 ```
 
 ### Genome sequence
