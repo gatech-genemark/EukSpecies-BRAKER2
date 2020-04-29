@@ -16,7 +16,20 @@ mkdir arx annot data
 
 # Genome
 
-TODO
+```bash
+wget ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/181/055/GCA_000181055.3_Rhodnius_prolixus-3.0.3/GCA_000181055.3_Rhodnius_prolixus-3.0.3_genomic.fna.gz
+gunzip GCA_000181055.3_Rhodnius_prolixus-3.0.3_genomic.fna.gz
+
+cat GCA_000181055.3_Rhodnius_prolixus-3.0.3_genomic.fna  | grep '^>' > defline
+cat defline | cut -f1 -d ' ' | cut -b2- > z
+paste z z > list.tbl
+
+get_fasta_with_tag.pl --swap --in GCA_000181055.3_Rhodnius_prolixus-3.0.3_genomic.fna --out tmp_genome.fasta  --list list.tbl --v
+probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
+
+rm tmp_genome.fasta
+mv genome.fasta ../data/genome.fasta
+```
 
 ### _De novo_ Masking
 
