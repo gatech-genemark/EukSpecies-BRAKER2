@@ -139,3 +139,21 @@ compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
 mv annot.gff3     ../annot
 mv annot.gtf      ../annot
 ```
+
+### Partial genes
+
+```bash
+cd $base/annot
+wget https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/004/195/GCF_000004195.4_UCB_Xtro_10.0/GCF_000004195.4_UCB_Xtro_10.0_genomic.gtf.gz
+gunzip GCF_000004195.4_UCB_Xtro_10.0_genomic.gtf.gz
+
+grep "partial \"true\"" GCF_000004195.4_UCB_Xtro_10.0_genomic.gtf |  grep -o -P "transcript_id\ \"[^\"]+\"" | cut -f2 -d " " | tr -d \" | sort | uniq > partial_transcripts
+grep "partial \"true\"" GCF_000004195.4_UCB_Xtro_10.0_genomic.gtf |  grep -o -P "gene_id\ \"[^\"]+\"" | cut -f2 -d " "  | tr -d \" |awk '{print "-" $1 "\""}' > partial_genes
+
+grep -Ff partial_transcripts annot.gtf > incompleteTranscripts.gtf
+grep -v -Ff partial_transcripts annot.gtf > completeTranscripts.gtf
+grep -v -Ff partial_genes annot.gtf > completeGenes.gtf
+grep -Ff partial_genes annot.gtf > incompleteGenes.gtf
+
+cp annot.gtf annot_raw.gtf
+```
