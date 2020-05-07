@@ -16,7 +16,18 @@ mkdir arx annot data
 
 # Genome
 
-TODO
+```bash
+# Download instructions, Alex, please fill in
+
+grep ">" Ptrichocarpa_533_v4.0.softmasked.fa > deflines
+cat deflines | grep Chr | tr -d ">" | awk '{print $1 "\t" $1}' > list.tbl
+
+get_fasta_with_tag.pl --swap --in Ptrichocarpa_533_v4.0.softmasked.fa  --out tmp_genome.fasta  --list list.tbl --v
+probuild --reformat_fasta --in tmp_genome.fasta --out genome.fasta --uppercase 1 --letters_per_line 60 --original
+
+rm tmp_genome.fasta
+mv genome.fasta ../data/genome.fasta
+```
 
 ### _De novo_ Masking
 
