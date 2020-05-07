@@ -60,4 +60,26 @@ bedtools maskfasta -fi genome.fasta -bed ../annot/mask.gff -fo genome.fasta.mask
 
 # Annotation
 
-TODO
+```bash
+# Download instructions, Alex, please fill in
+
+gff_to_gff_subset.pl  --swap  --list list.tbl  --in Ptrichocarpa_533_v4.1.gene.gff3  --out main.gff3
+echo "##gff-version 3" > annot.gff3
+probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | tr -d '>' |  grep -v '^$' | awk '{print "##sequence-region  " $1 "  1 " $2}' >> annot.gff3
+cat main.gff3 | grep -v "#" >> annot.gff3
+rm main.gff3
+
+gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
+mv tmp_annot.gff3 annot.gff3
+
+enrich_gff.pl --in annot.gff3 --out tmp_annot.gff3 --cds
+mv tmp_annot.gff3 annot.gff3
+
+gff3_to_gtf.pl annot.gff3 annot.gtf
+
+# Check
+compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
+
+mv annot.gff3     ../annot
+mv annot.gtf      ../annot
+```
