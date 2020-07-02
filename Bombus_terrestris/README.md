@@ -80,7 +80,7 @@ select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 mv pseudo.gff3 ../annot
 
 # Works when line 943 in enrich_gff.pl is commented out
-enrich_gff.pl --in annot.gff3 --out tmp_annot.gff3 --cds
+enrich_gff.pl --in annot.gff3 --out tmp_annot.gff3 --cds --seq ../data/genome.fasta --v --warnings
 mv tmp_annot.gff3 annot.gff3
 
 gff3_to_gtf.pl annot.gff3 annot.gtf
@@ -105,6 +105,4 @@ grep -Ff partial_transcripts annot.gtf > incompleteTranscripts.gtf
 grep -v -Ff partial_transcripts annot.gtf > completeTranscripts.gtf
 grep -v -Ff partial_genes annot.gtf > completeGenes.gtf
 grep -Ff partial_genes annot.gtf > incompleteGenes.gtf
-
-cp annot.gtf annot_raw.gtf
 ```
