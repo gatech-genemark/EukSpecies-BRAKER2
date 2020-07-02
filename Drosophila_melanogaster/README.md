@@ -123,6 +123,7 @@ gzip dmel-all-no-analysis-*.gff
 Data from http://appris.bioinfo.cnio.es
 
 ```bash
+cd $base/arx
 # download
 wget http://apprisws.bioinfo.cnio.es/pub/releases/2019_07.v29/datafiles/drosophila_melanogaster/BDGP6/appris_data.appris.txt
 
@@ -152,4 +153,11 @@ rm appris_2.tbl
 mv appris.gtf ../annot/
 
 gzip appris_data.appris.txt
+```
+
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
 ```

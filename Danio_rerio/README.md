@@ -92,7 +92,7 @@ mv tmp_annot.gff3  annot.gff3
 select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 mv pseudo.gff3 ../../annot/
 
-enrich_gff.pl --in annot.gff3 --out ensembl.gff3 --cds
+enrich_gff.pl --in annot.gff3 --out ensembl.gff3 --cds --seq ../../data/genome.fasta --v --warnings
 
 gff3_to_gtf.pl ensembl.gff3  ensembl.gtf
 
@@ -128,7 +128,16 @@ rm appris.tbl
 mv appris.gtf ../annot/
 ```
 
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
+```
+
 ### Incomplete CDS
+
+**This is an old description of an alternative way to find partial genes, left here for historical reasons.**
 
 * The following script:
     * Flags partial CDS
@@ -141,7 +150,7 @@ Assumes that annot.gtf is the enriched version of annotation with **incorrect st
 
 ```bash
 cd $base/annot
-flagPartialCDS.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf \
+flagPartialCDSFromEnsembl.py ../arx/ensembl/Danio_rerio.GRCz11.97.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf \
     --completeTranscriptsOutput completeTranscripts.gtf --fullOutput annot_fixed_partial.gtf --completeGenesOutput completeGenes.gtf \
     --incompleteGenesOutput incompleteGenes.gtf
 mv annot.gtf annot_raw.gtf

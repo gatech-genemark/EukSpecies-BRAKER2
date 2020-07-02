@@ -118,3 +118,12 @@ mv pseudo.gff3  ../annot/
 rm annot.gff3
 gzip Araport11_GFF3_genes_transposons.201606.gff
 ```
+
+
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
+```
+

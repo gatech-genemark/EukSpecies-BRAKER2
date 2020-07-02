@@ -89,7 +89,7 @@ mv tmp_annot.gff3 annot.gff3
 select_pseudo_from_nice_gff3.pl annot.gff3 pseudo.gff3
 mv pseudo.gff3 ../annot
 
-enrich_gff.pl --in annot.gff3 --out tmp_annot.gff3 --cds
+enrich_gff.pl --in annot.gff3 --out tmp_annot.gff3 --cds --seq ../data/genome.fasta --v --warnings
 mv tmp_annot.gff3 annot.gff3
 
 gff3_to_gtf.pl annot.gff3 annot.gtf
@@ -100,7 +100,16 @@ mv annot.gff3     ../annot
 mv annot.gtf      ../annot
 ```
 
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
+```
+
 ### Incomplete CDS
+
+**This is an old description of an alternative way to find partial genes, left here for historical reasons.**
 
 * The following script:
     * Flags partial CDS
@@ -119,7 +128,7 @@ gunzip rhodnius-prolixus-cdcbasefeaturesrproc33.gtf.gz
 cat rhodnius-prolixus-cdcbasefeaturesrproc33.gtf  | awk 'BEGIN{OFS="\t"} {$1=$1 ".1";print}' > annot_website.gtf
 
 cd $base/annot
-flagPartialCDS.py ../arx/annot_website.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf \
+flagPartialCDSFromEnsembl.py ../arx/annot_website.gtf annot.gtf --incompleteTranscriptsOutput incompleteTranscripts.gtf \
     --completeTranscriptsOutput completeTranscripts.gtf --fullOutput annot_fixed_partial.gtf --completeGenesOutput completeGenes.gtf \
     --incompleteGenesOutput incompleteGenes.gtf
 mv annot.gtf annot_raw.gtf

@@ -125,6 +125,7 @@ gzip c_elegans.PRJNA13758.WS271.annotations.gff3
 Data from http://appris.bioinfo.cnio.es
 
 ```bash
+cd $base/arx
 # download
 wget http://apprisws.bioinfo.cnio.es/pub/releases/2019_07.v29/datafiles/caenorhabditis_elegans/e97v29/appris_data.appris.txt
 
@@ -156,3 +157,9 @@ mv appris.gtf ../annot/
 gzip appris_data.appris.txt
 ```
 
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
+```

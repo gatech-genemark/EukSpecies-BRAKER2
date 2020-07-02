@@ -72,7 +72,7 @@ rm main.gff3
 gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o tmp_annot.gff3  annot.gff3
 mv tmp_annot.gff3 annot.gff3
 
-enrich_gff.pl --in annot.gff3 --out tmp_annot.gff3 --cds
+enrich_gff.pl --in annot.gff3 --out tmp_annot.gff3 --cds --seq ../data/genome.fasta --v --warnings
 mv tmp_annot.gff3 annot.gff3
 
 gff3_to_gtf.pl annot.gff3 annot.gtf
@@ -82,4 +82,11 @@ compare_intervals_exact.pl --f1 annot.gff3  --f2 annot.gtf
 
 mv annot.gff3     ../annot
 mv annot.gtf      ../annot
+```
+
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
 ```

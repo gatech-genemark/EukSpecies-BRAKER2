@@ -58,7 +58,7 @@ wget ftp://ftp.solgenomics.net/tomato_genome/annotation/ITAG4.0_release/ITAG4.0_
 
 gff_to_gff_subset.pl  --swap  --list list.tbl  --v  --in ITAG4.0_gene_models.gff  --out itag.gff
 echo "##gff-version 3" > tmp_itag.gff
-probuild --stat_fasta --seq ../../data/genome.fasta | cut -f1,2 | grep chr_ | tr -d '>' | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_itag.gff
+probuild --stat_fasta --seq ../data/genome.fasta | cut -f1,2 | grep chr_ | tr -d '>' | awk '{print "##sequence-region  " $1 "  1 " $2}' >> tmp_itag.gff
 cat itag.gff | grep -v '##gff-version'  >> tmp_itag.gff
 mv tmp_itag.gff itag.gff
 
@@ -67,7 +67,7 @@ gt  gff3validator itag.gff
 
 # reformat
 gt  gff3  -force  -tidy  -sort  -retainids  -checkids  -o itag_all.gff3  itag.gff
-enrich_gff.pl --in itag_all.gff3 --out itag.gff3 --cds
+enrich_gff.pl --in itag_all.gff3 --out itag.gff3 --cds --seq ../data/genome.fasta --v --warnings
 gff3_to_gtf.pl itag.gff3 itag.gtf
 rm itag_all.gff3 itag.gff
 
@@ -78,6 +78,14 @@ mv itag.gtf  ../annot/annot.gtf
 gff_to_gff_subset.pl  --swap  --list list.tbl  --v  --out $base/annot/itag_RM_softmask.gff     --in ITAG4.0_RepeatModeler_repeats_light.gff
 gff_to_gff_subset.pl  --swap  --list list.tbl  --v  --out $base/annot/itag_REPET_softmask.gff  --in ITAG4.0_REPET_repeats_aggressive.gff
 ```
+
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
+```
+
 # Masking
 
 ### Community coordinates

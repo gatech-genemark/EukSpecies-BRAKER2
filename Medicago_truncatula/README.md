@@ -120,3 +120,10 @@ mv pseudo.gff3  ../annot/
 rm annot.gff3
 gzip MtrunA17r5.0-ANR-EGN-r1.6.gff3.gff3
 ```
+
+### Categorize complete and incomplete transcripts
+
+```bash
+cd $base/annot
+findPartialGenes.py annot.gtf  --completeTranscripts completeTranscripts.gtf --incompleteTranscripts incompleteTranscripts.gtf --completeGenes completeGenes.gtf --incompleteGenes incompleteGenes.gtf
+```
