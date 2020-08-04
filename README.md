@@ -1,7 +1,18 @@
-# EukSpecies
-Genome and annotation preparation protocol for eukaryotic projects.
+# EukSpecies BRAKER2
 
-Only shared components are described in this document.
+Tomas Bruna, Katharina J Hoff, Alexandre Lomsadze, Mario Stanke, Mark Borodovsky
+
+Georgia Institute of Technology, Atlanta, Georgia, USA
+
+University of Greifswald, Greifswald, Germany
+
+Reference: To add.
+
+## Overview
+
+Genome and annotation preparation protocol for eukaryotic species used in the BRAKER2 project.
+
+Only shared components are described in this readme.
 Species specific commands are in species README files.
 
 ### Installation
