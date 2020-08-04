@@ -6,7 +6,7 @@ Species specific commands are in species README files.
 
 ### Installation
 ```
-git clone git@github.gatech.edu:al68/EukSpecies.git
+git clone git@github.com:gatech-genemark/EukSpecies-BRAKER2.git
 
 cd EukSpecies
 cd bin
