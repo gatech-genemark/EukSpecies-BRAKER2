@@ -918,6 +918,7 @@ sub SplitByMRNA
 		next if ( $entry->[2] eq "gene" );
 		next if ( $entry->[2] eq "nc_primary_transcript" );
 		next if ( $entry->[2] eq "lnc_RNA" );
+		next if ( $entry->[2] eq "transcript" );
 		next if ( $entry->[2] eq "unconfirmed_transcript" );
 		next if ( $entry->[2] =~ /^\S_gene_segment$/ );
 
@@ -960,7 +961,7 @@ sub GetMrnaIDs
 
 	foreach my $entry (@{$ref})
 	{
-		if (($entry->[2] eq "mRNA") or ($entry->[2] eq "nc_primary_transcript") or ($entry->[2] eq "lnc_RNA") or ($entry->[2] eq "unconfirmed_transcript") or ( $entry->[2] =~ /^\S_gene_segment$/))
+		if (($entry->[2] eq "mRNA") or ($entry->[2] eq "nc_primary_transcript") or ($entry->[2] eq "lnc_RNA") or ($entry->[2] eq "transcript") or ($entry->[2] eq "unconfirmed_transcript") or ( $entry->[2] =~ /^\S_gene_segment$/))
 		{
 			if ( $entry->[8] =~ /ID=(\S+?);/ )
 			{
