@@ -17,7 +17,7 @@ mkdir arx annot data
 # Genome
 
 ```bash
-# Download instructions, Alex, please fill in
+# Downloaded from https://data.jgi.doe.gov/refine-download/phytozome?organism=Ptrichocarpa&expanded=533
 
 grep ">" Ptrichocarpa_533_v4.0.softmasked.fa > deflines
 cat deflines | grep Chr | tr -d ">" | awk '{print $1 "\t" $1}' > list.tbl
@@ -61,7 +61,7 @@ bedtools maskfasta -fi genome.fasta -bed ../annot/mask.gff -fo genome.fasta.mask
 # Annotation
 
 ```bash
-# Download instructions, Alex, please fill in
+# Downloaded from https://data.jgi.doe.gov/refine-download/phytozome?organism=Ptrichocarpa&expanded=533
 
 gff_to_gff_subset.pl  --swap  --list list.tbl  --in Ptrichocarpa_533_v4.1.gene.gff3  --out main.gff3
 echo "##gff-version 3" > annot.gff3
